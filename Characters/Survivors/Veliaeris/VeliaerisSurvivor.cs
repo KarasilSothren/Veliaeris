@@ -1,4 +1,4 @@
-﻿using BepInEx.Configuration;
+using BepInEx.Configuration;
 using VeliaerisMod.Modules;
 using VeliaerisMod.Modules.Characters;
 using VeliaerisMod.Survivors.Henry.Components;
@@ -13,6 +13,7 @@ using EntityStates;
 using System.Runtime.CompilerServices;
 using VeliaerisMod;
 using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using VeliaerisMod.Characters.Survivors.Veliaeris;
 
 namespace VeliaerisMod.Survivors.Henry
 {
@@ -108,7 +109,8 @@ namespace VeliaerisMod.Survivors.Henry
             HenryConfig.Init();
             HenryStates.Init();
             HenryTokens.Init();
-
+            VeliaerisDots.Init();
+            DamageTypes.Init();
             HenryAssets.Init(assetBundle);
             VeliaerisBuffs.Init(assetBundle);
 
@@ -294,7 +296,7 @@ namespace VeliaerisMod.Survivors.Henry
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(Roll)),
-                activationStateMachineName = "Body",
+                activationStateMachineName = "Slide",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
                 baseRechargeInterval = 4f,
@@ -313,7 +315,7 @@ namespace VeliaerisMod.Survivors.Henry
                 isCombatSkill = false,
                 canceledFromSprinting = false,
                 cancelSprintingOnActivation = false,
-                forceSprintDuringState = true,
+                forceSprintDuringState = false,
             });
 
             Skills.AddUtilitySkills(bodyPrefab, utilitySkillDef1);
@@ -451,7 +453,14 @@ namespace VeliaerisMod.Survivors.Henry
                 {
                     InflictionBuffs.Add(BuffCatalog.buffDefs[i].buffIndex);
                     System.Console.WriteLine("an abyss was found");
+                    if (!BuffCatalog.buffDefs[i].canStack)
+                    {
+                        System.Console.WriteLine("A void was found");
+                        InflictionBuffs.Add(BuffCatalog.buffDefs[i].buffIndex);
+                        InflictionBuffs.Add(BuffCatalog.buffDefs[i].buffIndex);
+                    }
                 }
+                System.Console.WriteLine("InflictionBuffs",InflictionBuffs);
             }
         }
 
@@ -459,41 +468,53 @@ namespace VeliaerisMod.Survivors.Henry
 
         private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
-            bool flag = DamageAPI.HasModdedDamageType(damageInfo, DamageTypes.AbyssCorrosion);
-            if (flag)
+            System.Console.WriteLine("preflag");
+            System.Console.WriteLine("corrosion:",DamageTypes.AbyssCorrosion);
+            System.Console.WriteLine("damageinfo",damageInfo);
+            if (DamageAPI.HasModdedDamageType(damageInfo, DamageTypes.AbyssCorrosion))
             {
-                bool flag2 = self.body == null;
-                int num;
-                if (flag2)
+                System.Console.WriteLine("entered first flag");
+                int corrosion;
+                if (self.body==null)
                 {
-                    num = 0;
+                    System.Console.WriteLine("flag2a");
+                    corrosion = 0;
                 }
                 else
                 {
-                    num = self.body.GetBuffCount(VeliaerisBuffs.abyss) + this.GetInflictionBuffs(self.body);
+                    System.Console.WriteLine("flag2");
+                    corrosion = self.body.GetBuffCount(VeliaerisBuffs.abyss) + this.GetInflictionBuffs(self.body);
                 }
-                damageInfo.damage += VeliaerisSurvivor.DamageMultipliterPerAbyssStack * (float)num * damageInfo.damage;
+                damageInfo.damage += DamageMultipliterPerAbyssStack * corrosion * damageInfo.damage;
             }
             orig.Invoke(self,damageInfo);
         }
 
         private int GetInflictionBuffs(CharacterBody body)
         {
+            System.Console.WriteLine("entered getinfliction");
             int num = 0;
-            for(int i = 0; i < VeliaerisSurvivor.InflictionBuffs.Count; i++)
+            for(int i = 0; i < InflictionBuffs.Count; i++)
             {
-                num += body.GetBuffCount(VeliaerisSurvivor.InflictionBuffs[i]);
+                num += body.GetBuffCount(InflictionBuffs[i]);
             }
             return num;
         }
 
         private void GlobalEventManager_onServerDamageDealt(DamageReport damageReport)
         {
-            bool flag = DamageAPI.HasModdedDamageType(damageReport.damageInfo,DamageTypes.AbyssCorrosion);
-            if (flag)
+            System.Console.WriteLine("Global event happening");
+            if (DamageAPI.HasModdedDamageType(damageReport.damageInfo, DamageTypes.AbyssCorrosion))
             {
-                damageReport.victimBody.AddBuff(VeliaerisBuffs.abyss);
+                System.Console.WriteLine("enteredEvent");
+                inflictOblivion(damageReport.victim.gameObject,damageReport.attacker,damageReport.damageInfo.procCoefficient,false);
             }
+        }
+
+        private void inflictOblivion(GameObject victim, GameObject attacker, float procCoefficient, bool crit)
+        {
+            System.Console.WriteLine("inflicting");
+            DotController.InflictDot(victim, attacker, VeliaerisDots.AbyssCorrosion, DotDuration, (crit ? 2 : 1) * procCoefficient);
         }
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
