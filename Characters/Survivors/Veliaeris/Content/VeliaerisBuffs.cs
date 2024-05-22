@@ -1,4 +1,4 @@
-﻿using RoR2;
+using RoR2;
 using UnityEngine;
 
 namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
@@ -19,7 +19,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
                 false);
 
             abyss = Modules.Content.CreateAndAddBuff("abyss",
-                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/HiddenInvincibility").iconSprite,
+                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/Blight").iconSprite,
                 Color.magenta,
                 true,
                 true);
