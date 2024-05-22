@@ -1,4 +1,4 @@
-﻿using VeliaerisMod.Modules.BaseStates;
+using VeliaerisMod.Modules.BaseStates;
 using R2API;
 using RoR2;
 using System.Collections.Generic;
@@ -11,13 +11,15 @@ namespace VeliaerisMod.Survivors.Henry.SkillStates
     {
         private OverlapAttack attack;
         protected List<DamageAPI.ModdedDamageType> moddedDamageTypeHolder = new List<DamageAPI.ModdedDamageType>();
+        protected float attackStartTime = 0.2f;
+        protected float attackEndTime = 0.4f;
         protected new DamageType damageType = DamageType.Generic;
         public override void OnEnter()
         {
+            base.OnEnter();
             hitboxGroupName = "SwordGroup";
             attack = new OverlapAttack();
             attack.damageType = damageType;
-            this.attack.AddModdedDamageType(DamageTypes.AbyssCorrosion);
             damageCoefficient = HenryStaticValues.swordDamageCoefficient;
             procCoefficient = 1f;
             pushForce = 300f;
@@ -45,7 +47,13 @@ namespace VeliaerisMod.Survivors.Henry.SkillStates
 
             impactSound = HenryAssets.swordHitSoundEvent.index;
 
-            base.OnEnter();
+
+        }
+
+        protected void infliction(OverlapAttack attack)
+        {
+            System.Console.WriteLine("Infliction go!");
+            attack.AddModdedDamageType(DamageTypes.AbyssCorrosion);
         }
 
         protected override void PlayAttackAnimation()
@@ -53,9 +61,28 @@ namespace VeliaerisMod.Survivors.Henry.SkillStates
             PlayCrossfade("Gesture, Override", "Slash" + (1 + swingIndex), playbackRateParam, duration, 0.1f * duration);
         }
 
+        private void FireAttack()
+        {
+            System.Console.WriteLine("Fire attack go!");
+            if(base.isAuthority)
+            {
+                infliction(this.attack);
+            }
+        }
+
         protected override void PlaySwingEffect()
         {
             base.PlaySwingEffect();
+        }
+
+        public override void FixedUpdate()
+        {
+            System.Console.WriteLine("Fixed update go!");
+            base.FixedUpdate();
+            if (this.stopwatch >= (this.duration * this.attackStartTime) && this.stopwatch <= (this.duration * this.attackEndTime))
+            {
+                this.FireAttack();
+            }
         }
 
         protected override void OnHitEnemyAuthority()
