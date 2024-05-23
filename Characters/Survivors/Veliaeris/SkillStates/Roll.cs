@@ -1,113 +1,111 @@
-﻿using EntityStates;
+using EntityStates;
 using VeliaerisMod.Survivors.Henry;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using VeliaerisMod.Modules;
+using RoR2.Skills;
 
 namespace VeliaerisMod.Survivors.Henry.SkillStates
 {
     public class Roll : BaseSkillState
     {
-        public static float duration = 0.5f;
-        public static float initialSpeedCoefficient = 5f;
-        public static float finalSpeedCoefficient = 2.5f;
-
-        public static string dodgeSoundString = "HenryRoll";
-        public static float dodgeFOV = global::EntityStates.Commando.DodgeState.dodgeFOV;
-
-        private float rollSpeed;
-        private Vector3 forwardDirection;
+        public AssetBundle assetBundle { get; protected set; }
+        public static SkillDef secondprimarySkillDef;
+        public static SteppedSkillDef primarySkillDef2;
         private Animator animator;
         private Vector3 previousPosition;
+        private VeliaerisStates splitSate;
 
         public override void OnEnter()
         {
+            System.Console.WriteLine("rolled");
             base.OnEnter();
+            System.Console.WriteLine(VeliaerisPlugin.VeliaerisStates);
+            System.Console.WriteLine(VeliaerisPlugin.firstChange);
+            System.Console.WriteLine(splitSate.ToString());
+            if (base.isAuthority && !VeliaerisPlugin.firstChange)
+            {
+                if (VeliaerisPlugin.VeliaerisStates != VeliaerisStates.Veliaeris)
+                {
+                    splitSate = VeliaerisPlugin.VeliaerisStates;
+                }
+                System.Console.WriteLine(VeliaerisPlugin.VeliaerisStates);
+                if (VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Veliaeris)
+                {
+                    VeliaerisPlugin.VeliaerisStates = splitSate;
+                }
+                else if (VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Eris || VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Velia)
+                {
+                    VeliaerisPlugin.VeliaerisStates = VeliaerisStates.Veliaeris;
+                }
+                System.Console.WriteLine(VeliaerisPlugin.VeliaerisStates);
+            }
+            if (base.isAuthority && VeliaerisPlugin.firstChange)
+            {
+                VeliaerisPlugin.VeliaerisStates = VeliaerisStates.Eris;
+                VeliaerisPlugin.firstChange = false;
+                System.Console.WriteLine(VeliaerisPlugin.firstChange);
+            }
             animator = GetModelAnimator();
-
-            if (isAuthority && inputBank && characterDirection)
+            string prefix = VeliaerisPlugin.DEVELOPER_PREFIX;
+            secondprimarySkillDef = Modules.Skills.CreateSkillDef(new SkillDefInfo
             {
-                forwardDirection = (inputBank.moveVector == Vector3.zero ? characterDirection.forward : inputBank.moveVector).normalized;
+                skillName = "HenryGun",
+                skillNameToken = prefix + "SECONDARY_GUN_NAME",
+                skillDescriptionToken = prefix + "SECONDARY_GUN_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SlashCombo)),
+                activationStateMachineName = "Weapon",
+                keywordTokens = new string[] { "KEYWORD_AGILE" }
+            }
+            );
+            primarySkillDef2 = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
+    (
+        "HenrySlash",
+        prefix + "PRIMARY_SLASH_NAME",
+        prefix + "PRIMARY_SLASH_DESCRIPTION",
+        assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+        new EntityStates.SerializableEntityStateType(typeof(SkillStates.SlashCombo)),
+        "Weapon",
+        true
+    ));
+
+            if (VeliaerisPlugin.VeliaerisStates != VeliaerisStates.Veliaeris)
+            {
+                base.skillLocator.primary.SetSkillOverride(base.skillLocator.primary, secondprimarySkillDef, GenericSkill.SkillOverridePriority.Contextual);
+            }
+            else if(VeliaerisPlugin.VeliaerisStates==VeliaerisStates.Veliaeris)
+            {
+                base.skillLocator.primary.SetSkillOverride(base.skillLocator.primary, primarySkillDef2, GenericSkill.SkillOverridePriority.Contextual);
             }
 
-            Vector3 rhs = characterDirection ? characterDirection.forward : forwardDirection;
-            Vector3 rhs2 = Vector3.Cross(Vector3.up, rhs);
 
-            float num = Vector3.Dot(forwardDirection, rhs);
-            float num2 = Vector3.Dot(forwardDirection, rhs2);
+            
 
-            RecalculateRollSpeed();
-
-            if (characterMotor && characterDirection)
-            {
-                characterMotor.velocity.y = 0f;
-                characterMotor.velocity = forwardDirection * rollSpeed;
-            }
-
-            Vector3 b = characterMotor ? characterMotor.velocity : Vector3.zero;
-            previousPosition = transform.position - b;
-
-            PlayAnimation("FullBody, Override", "Roll", "Roll.playbackRate", duration);
-            Util.PlaySound(dodgeSoundString, gameObject);
-
-            if (NetworkServer.active)
-            {
-                characterBody.AddTimedBuff(VeliaerisBuffs.armorBuff, 3f * duration);
-                characterBody.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 0.5f * duration);
-            }
         }
 
-        private void RecalculateRollSpeed()
-        {
-            rollSpeed = moveSpeedStat * Mathf.Lerp(initialSpeedCoefficient, finalSpeedCoefficient, fixedAge / duration);
-        }
 
         public override void FixedUpdate()
         {
             base.FixedUpdate();
-            RecalculateRollSpeed();
 
-            if (characterDirection) characterDirection.forward = forwardDirection;
-            if (cameraTargetParams) cameraTargetParams.fovOverride = Mathf.Lerp(dodgeFOV, 60f, fixedAge / duration);
 
-            Vector3 normalized = (transform.position - previousPosition).normalized;
-            if (characterMotor && characterDirection && normalized != Vector3.zero)
-            {
-                Vector3 vector = normalized * rollSpeed;
-                float d = Mathf.Max(Vector3.Dot(vector, forwardDirection), 0f);
-                vector = forwardDirection * d;
-                vector.y = 0f;
-
-                characterMotor.velocity = vector;
-            }
-            previousPosition = transform.position;
-
-            if (isAuthority && fixedAge >= duration)
-            {
-                outer.SetNextStateToMain();
-                return;
-            }
+            //if (isAuthority && fixedAge >= duration)
+            //{
+            //    outer.SetNextStateToMain();
+            //    return;
+            //}
         }
+
 
         public override void OnExit()
         {
-            if (cameraTargetParams) cameraTargetParams.fovOverride = -1f;
-            base.OnExit();
 
-            characterMotor.disableAirControlUntilCollision = false;
         }
 
-        public override void OnSerialize(NetworkWriter writer)
-        {
-            base.OnSerialize(writer);
-            writer.Write(forwardDirection);
-        }
 
-        public override void OnDeserialize(NetworkReader reader)
-        {
-            base.OnDeserialize(reader);
-            forwardDirection = reader.ReadVector3();
-        }
+
     }
-}
+    }
