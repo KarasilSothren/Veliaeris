@@ -1,108 +1,106 @@
-﻿using EntityStates;
-using VeliaerisMod.Survivors.Henry;
+using EntityStates;
+using VeliaerisMod.Survivors.Veliaeris;
 using RoR2;
 using RoR2.Skills;
 using System.Linq;
 using UnityEngine;
 using VeliaerisMod;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using IL.RoR2.Orbs;
+using On.RoR2.Orbs;
+using R2API;
+using VeliaerisMod.Modules;
+using UnityEngine.Networking;
 
-namespace VeliaerisMod.Survivors.Henry.SkillStates
+namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 {
-    public class Shoot : BaseSkillState
+    public class Shoot : BaseState
     {
         public static float damageCoefficient = HenryStaticValues.gunDamageCoefficient;
         public static float procCoefficient = 1f;
-        public static float baseDuration = 0.6f;
+        public float baseDuration = 0.6f;
         //delay on firing is usually ass-feeling. only set this if you know what you're doing
-        public static float firePercentTime = 0.0f;
-        public static float force = 800f;
-        public static float recoil = 3f;
-        public static float range = 256f;
-        public static GameObject tracerEffectPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/Effects/Tracers/TracerGoldGat");
         private HuntressTracker hunterTracker;
         private float duration;
-        private float fireTime;
-        private bool hasFired;
+        private ChildLocator childLocator;
+        private HurtBox initialOrbTarget;
+        public float orbProcCoefficent;
         private string muzzleString;
-        private CameraTargetParams.AimRequest aimRequest;
-        private readonly BullseyeSearch search = new BullseyeSearch();
+        private Animator animator;
+        protected bool isCrit;
+        private int firedArrowCount;
+        private int maxArrowCount;
+
         public override void OnEnter()
         {
             base.OnEnter();
+            Transform modelTransfrom = base.GetModelTransform();
             this.hunterTracker = base.GetComponent<HuntressTracker>();
-            skillLocator.enabled = false;
-            //if (hunterTracker.GetTrackingTarget() != null)
-            //{
-            //    System.Console.WriteLine("not null");
-            //}
-
-            
-            //if(this.search.GetResults().FirstOrDefault<HurtBox>() != null )
-            //{
-            //    System.Console.WriteLine("Null is not");
-            //}
-            //else
-            //{
-            //    System.Console.WriteLine("Null");
-            //}
-            //if (hunterTracker.GetTrackingTarget() != null)
-            //{
-            //    System.Console.WriteLine("Is not null");
-            //}
-            //else
-            //{
-            //    System.Console.WriteLine("is null");
-            //}
-
-            if (this.hunterTracker)
+            if (modelTransfrom)
             {
-                System.Console.WriteLine("hunter true");
+                this.childLocator = modelTransfrom.GetComponent<ChildLocator>();
+                this.animator = modelTransfrom.GetComponent <Animator>();
+                
             }
-            if (hunterTracker==null)
+            if(this.hunterTracker&&base.isAuthority)
             {
-                System.Console.WriteLine("hunter false");
+                this.initialOrbTarget = this.hunterTracker.GetTrackingTarget();
             }
-            if (this.hunterTracker)
+            this.duration = this.baseDuration / this.attackSpeedStat;
+            if (base.characterBody)
             {
-                this.hunterTracker.enabled = false;
+                base.characterBody.SetAimTimer(this.duration+1f);
             }
-            if (base.cameraTargetParams)
-            {
-                this.aimRequest = base.cameraTargetParams.RequestAimType(CameraTargetParams.AimType.Aura);
-            }
-
-
+            this.isCrit = Util.CheckRoll(base.characterBody.crit, base.characterBody.master);
             //System.Console.WriteLine("looking:",hunterTracker.ToString());
-            duration = baseDuration / attackSpeedStat;
-            fireTime = firePercentTime * duration;
-            characterBody.SetAimTimer(2f);
-            muzzleString = "Muzzle";
-
-            PlayAnimation("LeftArm, Override", "ShootGun", "ShootGun.playbackRate", 1.8f);
+            
         }
 
         public override void OnExit()
         {
-            CameraTargetParams.AimRequest aimRequest = this.aimRequest;
-            if (aimRequest != null)
-            {
-                aimRequest.Dispose();
-            }
-            if (this.hunterTracker)
-            {
-                this.hunterTracker.enabled = true;
-            }
             base.OnExit();
+            this.FireOrbArrow();
+        }
+
+        protected virtual RoR2.Orbs.GenericDamageOrb CreateArrowOrb()
+        {
+            return new RoR2.Orbs.HuntressArrowOrb();
+        }
+
+        private void FireOrbArrow()
+        {
+            //if (this.firedArrowCount >= this.maxArrowCount || !NetworkServer.active)
+            //{
+
+            //    return;
+            //}
+            //this.firedArrowCount++;
+            RoR2.Orbs.GenericDamageOrb genericDamageOrb = this.CreateArrowOrb();
+
+           // genericDamageOrb.AddModdedDamageType(DamageTypes.AbyssCorrosion);
+            genericDamageOrb.damageValue = damageCoefficient;
+            genericDamageOrb.isCrit = this.isCrit;
+            genericDamageOrb.teamIndex = TeamComponent.GetObjectTeam(base.gameObject);
+            genericDamageOrb.attacker = base.gameObject;
+            genericDamageOrb.procCoefficient = this.orbProcCoefficent;
+            HurtBox hurtBox = this.initialOrbTarget;
+            System.Console.WriteLine("Outside of Hurtbox");
+            if (hurtBox)
+            {
+                Transform transform = this.childLocator.FindChild(this.muzzleString);
+                System.Console.WriteLine(transform.position);
+                genericDamageOrb.origin = transform.position;
+                System.Console.WriteLine(genericDamageOrb.origin);
+                genericDamageOrb.target = hurtBox;
+                RoR2.Orbs.OrbManager.instance.AddOrb(genericDamageOrb);
+                System.Console.WriteLine("Shot has been fired");
+            }
         }
 
         public override void FixedUpdate()
         {
             base.FixedUpdate();
 
-            if (fixedAge >= fireTime)
-            {
-                Fire();
-            }
 
             if (fixedAge >= duration && isAuthority)
             {
@@ -111,59 +109,23 @@ namespace VeliaerisMod.Survivors.Henry.SkillStates
             }
         }
 
-        private void Fire()
-        {
-            if (!hasFired)
-            {
-                hasFired = true;
 
-                characterBody.AddSpreadBloom(1.5f);
-                EffectManager.SimpleMuzzleFlash(EntityStates.Commando.CommandoWeapon.FirePistol2.muzzleEffectPrefab, gameObject, muzzleString, false);
-                Util.PlaySound("HenryShootPistol", gameObject);
-
-                if (isAuthority)
-                {
-                    Ray aimRay = GetAimRay();
-                    AddRecoil(-1f * recoil, -2f * recoil, -0.5f * recoil, 0.5f * recoil);
-
-                    new BulletAttack
-                    {
-                        bulletCount = 1,
-                        aimVector = aimRay.direction,
-                        origin = aimRay.origin,
-                        damage = damageCoefficient * damageStat,
-                        damageColorIndex = DamageColorIndex.Void,
-                        damageType = DamageType.Generic,
-                        falloffModel = BulletAttack.FalloffModel.None,
-                        maxDistance = range,
-                        force = force,
-                        hitMask = LayerIndex.CommonMasks.bullet,
-                        minSpread = 0f,
-                        maxSpread = 0f,
-                        isCrit = RollCrit(),
-                        owner = gameObject,
-                        muzzleName = muzzleString,
-                        smartCollision = true,
-                        procChainMask = default,
-                        procCoefficient = procCoefficient,
-                        radius = 0.75f,
-                        sniper = false,
-                        stopperMask = LayerIndex.CommonMasks.bullet,
-                        weapon = null,
-                        tracerEffectPrefab = tracerEffectPrefab,
-                        spreadPitchScale = 0f,
-                        spreadYawScale = 0f,
-                        queryTriggerInteraction = QueryTriggerInteraction.UseGlobal,
-                        hitEffectPrefab = EntityStates.Commando.CommandoWeapon.FirePistol2.hitEffectPrefab,
-                    }.Fire();
-                }
-            }
-        }
         
 
         public override InterruptPriority GetMinimumInterruptPriority()
         {
-            return InterruptPriority.PrioritySkill;
+            return InterruptPriority.Skill;
+        }
+
+        public override void OnSerialize(NetworkWriter writer)
+        {
+            writer.Write(HurtBoxReference.FromHurtBox(this.initialOrbTarget));
+        }
+
+        // Token: 0x06000E60 RID: 3680 RVA: 0x0003E0A0 File Offset: 0x0003C2A0
+        public override void OnDeserialize(NetworkReader reader)
+        {
+            this.initialOrbTarget = reader.ReadHurtBoxReference().ResolveHurtBox();
         }
     }
 }
