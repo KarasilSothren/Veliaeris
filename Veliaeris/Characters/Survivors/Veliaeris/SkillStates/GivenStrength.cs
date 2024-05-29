@@ -1,0 +1,68 @@
+﻿using EntityStates;
+using IL.RoR2.Orbs;
+using On.RoR2.Orbs;
+using R2API;
+using RoR2;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UnityEngine.Networking;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+
+namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
+{
+    public class GivenStrength :BaseSkillState
+    {
+        private HurtBox[] targetTargets;
+        public float duration = 10f;
+        public override void OnEnter()
+        {
+
+            CharacterBody body;
+            body = this.GetComponent<CharacterBody>();
+            this.characterBody.AddTimedBuff(VeliaerisBuffs.lesserSistersBlessing, duration);
+            TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i].teamIndex == this.teamComponent.teamIndex)
+                {
+                    array[i].GetComponent<CharacterBody>().AddTimedBuff(VeliaerisBuffs.lesserSistersBlessing, duration);
+                }
+            }
+            if (NetworkServer.active)
+            {
+                BullseyeSearch targetSearch = new BullseyeSearch();
+                targetSearch.filterByDistinctEntity = true;
+                targetSearch.filterByLoS = false;
+                targetSearch.maxDistanceFilter = 30f;
+                targetSearch.minDistanceFilter = 0f;
+                targetSearch.minAngleFilter = 0f;
+                targetSearch.maxAngleFilter = 180f;
+                targetSearch.sortMode = BullseyeSearch.SortMode.Distance;
+                targetSearch.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
+                targetSearch.searchOrigin = base.characterBody.corePosition;
+                targetSearch.RefreshCandidates();
+                targetSearch.FilterOutGameObject(base.gameObject);
+                IEnumerable<HurtBox> results = targetSearch.GetResults();
+                this.targetTargets = results.ToArray<HurtBox>();
+            }
+
+            if(NetworkServer.active)
+            {
+                for(int i = 0; i < this.targetTargets.Length; i++)
+                {
+                    targetTargets[i].healthComponent.body.AddTimedBuff(RoR2Content.Buffs.Cripple, 10f);
+                }
+
+
+            }
+            base.OnEnter();
+        }
+
+        public override void OnExit()
+        {
+            base.OnExit();
+        }
+    }
+}
