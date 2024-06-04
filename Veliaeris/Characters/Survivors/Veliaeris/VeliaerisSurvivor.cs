@@ -1,7 +1,7 @@
 ﻿using BepInEx.Configuration;
 using VeliaerisMod.Modules;
 using VeliaerisMod.Modules.Characters;
-using VeliaerisMod.Survivors.Veliaeris.Components;
+//using VeliaerisMod.Survivors.Veliaeris.Components;
 using VeliaerisMod.Survivors.Veliaeris.SkillStates;
 using R2API;
 using RoR2;
@@ -14,6 +14,10 @@ using System.Runtime.CompilerServices;
 using VeliaerisMod;
 using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 using VeliaerisMod.Characters.Survivors.Veliaeris;
+using UnityEngine.Networking;
+using VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates;
+using static RoR2.TeleporterInteraction;
+using UnityEngine.SceneManagement;
 
 namespace VeliaerisMod.Survivors.Veliaeris
 {
@@ -34,6 +38,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
         public const string VELIAERIS_PREFIX = VeliaerisPlugin.DEVELOPER_PREFIX + "_VELIAERIS_";
         //used when registering your survivor's language tokens
         public override string survivorTokenPrefix => VELIAERIS_PREFIX;
+        Color VoidDisplay = new Color(82f,1f,75f);
         public override BodyInfo bodyInfo => new BodyInfo
         {
             bodyName = bodyName,
@@ -41,16 +46,16 @@ namespace VeliaerisMod.Survivors.Veliaeris
             subtitleNameToken = VELIAERIS_PREFIX + "SUBTITLE",
 
             characterPortrait = assetBundle.LoadAsset<Texture>("texHenryIcon"),
-            bodyColor = Color.white,
+            bodyColor = new Color(143f / 216f, 3f / 255f, 140f / 255f),
             sortPosition = 100,
 
             crosshair = Assets.LoadCrosshair("Standard"),
             podPrefab = null,
             //podPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/SurvivorPod"),
 //            moveSpeed = 100f,
-            maxHealth = 9999f,/*original max health 110f*/
-            healthRegen = 101.5f,/*original healthRegen 1.5f*/
-            armor = 9999f,/*original armor 0f*/
+            maxHealth = 120f,/*original max health 110f*/
+            healthRegen = 1.5f,/*original healthRegen 1.5f*/
+            armor = 10f,/*original armor 0f*/
 
             jumpCount = 1,
         };
@@ -72,9 +77,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 }
         };
 
-        public override UnlockableDef characterUnlockableDef => HenryUnlockables.characterUnlockableDef;
+        public override UnlockableDef characterUnlockableDef => VeliaerisUnlockables.characterUnlockableDef;
         
-        public override ItemDisplaysBase itemDisplays => new HenryItemDisplays();
+        public override ItemDisplaysBase itemDisplays => new VeliaerisItemDisplays();
 
         //set in base classes
         public override AssetBundle assetBundle { get; protected set; }
@@ -98,17 +103,16 @@ namespace VeliaerisMod.Survivors.Veliaeris
         public override void InitializeCharacter()
         {
             //need the character unlockable before you initialize the survivordef
-            HenryUnlockables.Init();
+            VeliaerisUnlockables.Init();
 
             base.InitializeCharacter();
-            HenryConfig.Init();
-            HenryStates.Init();
-            HenryTokens.Init();
+            VeliaerisConfig.Init();
+            VeliaerisStates.Init();
+            VeliaerisTokens.Init();
             VeliaerisBuffs.Init(assetBundle);
             VeliaerisDots.Init();
             DamageTypes.Init();
-            HenryAssets.Init(assetBundle);
-
+            VeliaerisAssets.Init(assetBundle);
 
             InitializeEntityStateMachines();
             InitializeSkills();
@@ -123,7 +127,8 @@ namespace VeliaerisMod.Survivors.Veliaeris
         private void AdditionalBodySetup()
         {
             AddHitboxes();
-            bodyPrefab.AddComponent<HenryWeaponComponent>();
+//            bodyPrefab.AddComponent<HenryWeaponComponent>();
+            bodyPrefab.AddComponent<ReviveTimer>();
             //bodyPrefab.AddComponent<HuntressTrackerComopnent>();
             //anything else here
         }
@@ -147,7 +152,10 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon");
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon2");
-            Prefabs.AddEntityStateMachine(bodyPrefab, "Slide");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Switch");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Buff");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Detonator");
+
         }
 
         #region skills
@@ -175,23 +183,23 @@ namespace VeliaerisMod.Survivors.Veliaeris
             //    skillDescriptionToken = VELIAERIS_PREFIX + "PASSIVE_DESCRIPTION",
             //    icon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
             //};
-            VeliaerisPassive startStatePassive = bodyPrefab.AddComponent<VeliaerisPassive>();
+            VeliaerisPassive passiveSkillSlot = bodyPrefab.AddComponent<VeliaerisPassive>();
             //option 2. a new SkillFamily for a passive, used if you want multiple selectable passives
-            startStatePassive.passiveSkillSlot = Modules.Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, "Passive",true);
+            passiveSkillSlot.passiveSkillSlot = Modules.Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, "Passive",true);
             SkillLocator skilllocat = bodyPrefab.GetComponent<SkillLocator>();
             skilllocat.passiveSkill.enabled = true;
             skilllocat.passiveSkill.skillNameToken = VELIAERIS_PREFIX + "PASSIVE_NAME";
             skilllocat.passiveSkill.skillDescriptionToken = VELIAERIS_PREFIX + "PASSIVE_DESCRIPTION";
+            skilllocat.passiveSkill.keywordToken = VELIAERIS_PREFIX + "SKILL_INFORMATION";
             skilllocat.passiveSkill.icon = assetBundle.LoadAsset<Sprite>("texPassiveIcon");
 
 
-            startStatePassive.VeliaerisStart = Skills.CreateSkillDef(new SkillDefInfo
+            passiveSkillSlot.VeliaerisStart = Skills.CreateSkillDef(new SkillDefInfo
             {
                 
                 skillName = "VeliaerisPassive",
                 skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "PASSIVE_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
 
                 //unless you're somehow activating your passive like a skill, none of the following is needed.
@@ -220,39 +228,34 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 //forceSprintDuringState = false,
 
             });
-            System.Console.WriteLine("check9");
-            startStatePassive.ErisStart = Skills.CreateSkillDef(new SkillDefInfo
+            passiveSkillSlot.ErisStart = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "ErisPassive",
                 skillNameToken = VELIAERIS_PREFIX + "ERIS_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "PASSIVE_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
 
             });
 
-            startStatePassive.VeliaStart = Skills.CreateSkillDef(new SkillDefInfo
+            passiveSkillSlot.VeliaStart = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "VeliaPassive",
                 skillNameToken = VELIAERIS_PREFIX + "VELIA_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "PASSIVE_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
 
             });
-            AddPassiveSkills(startStatePassive.passiveSkillSlot.skillFamily, new SkillDef[]
+            AddPassiveSkills(passiveSkillSlot.passiveSkillSlot.skillFamily, new SkillDef[]
             {
-                startStatePassive.VeliaerisStart,
-                startStatePassive.ErisStart,
-                startStatePassive.VeliaStart
+                passiveSkillSlot.VeliaerisStart,
+                passiveSkillSlot.ErisStart,
+                passiveSkillSlot.VeliaStart
             });
 
-            System.Console.WriteLine("check10");
             
         }
         public static void AddPassiveSkills(SkillFamily passiveSkillFamily, params SkillDef[] skillDefs)
         {
-            System.Console.WriteLine("Skilldefs length: " + skillDefs.Length);
             Modules.Skills.AddSkillsToFamily(passiveSkillFamily, skillDefs);
         }
 
@@ -278,17 +281,42 @@ namespace VeliaerisMod.Survivors.Veliaeris
             //primarySkillDef1.stepGraceDuration = 0.5f;
 
             //Skills.AddPrimarySkills(bodyPrefab, primarySkillDef1);
-            SkillDef primaryTracking = Skills.CreateSkillDef(new SkillDefInfo(
-                                    "HenrySlash",
-                    VELIAERIS_PREFIX + "PRIMARY_SLASH_NAME",
-                    VELIAERIS_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
-                    assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
-                    new EntityStates.SerializableEntityStateType(typeof(SkillStates.BasicScytheSlash)),
-                    "Weapon",
-                    true
-                )
+            SkillDef basicScythe = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName = "BasicScythe",
+                skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_PRIMARY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "VELIAERIS_PRIMARY_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(BasicScytheSlash)),
+                activationStateMachineName = "Weapon",
+                isCombatSkill = true,
+            }
                 );
-            Skills.AddPrimarySkills(bodyPrefab, primaryTracking);
+            SkillDef voidSkillDef = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName = "grasp",
+                skillNameToken = VELIAERIS_PREFIX + "ERIS_PRIMARY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_PRIMARY_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(GraspOfOblivion)),
+                activationStateMachineName = "Weapon",
+                isCombatSkill = true,
+            });
+            SkillDef reductioncythe = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName="BasicScythe",
+                skillNameToken=VELIAERIS_PREFIX + "VELIA_PRIMARY_NAME",
+                skillDescriptionToken=VELIAERIS_PREFIX + "VELIA_PRIMARY_DESCRIPTION",
+                skillIcon=assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+                keywordTokens=new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
+                activationState=new EntityStates.SerializableEntityStateType(typeof(BasicScytheSlashWithReductions)),
+                activationStateMachineName= "Weapon",
+                isCombatSkill=true,
+                });
+
+            Skills.AddPrimarySkills(bodyPrefab, basicScythe,voidSkillDef,reductioncythe);
         }
 
         public void AddSecondarySkills()
@@ -299,9 +327,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
             HuntressTrackingSkillDef secondarySkillDef1 = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
             {
                 skillName = "HenryGun",
-                skillNameToken = VELIAERIS_PREFIX + "SECONDARY_GUN_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "SECONDARY_GUN_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_SECONDARY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "VELIAERIS_SECONDARY_DESCRIPTION",
+                keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Corrupt)),
@@ -330,7 +358,75 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
             });
 
-            Skills.AddSecondarySkills(bodyPrefab, secondarySkillDef1);
+
+            HuntressTrackingSkillDef secondarySkillDef2 = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            {
+                skillName = "HenryGun",
+                skillNameToken = VELIAERIS_PREFIX + "ERIS_SECONDARY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_SECONDARY_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
+                keywordTokens = new string[] {VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(GivenStrength)),
+                activationStateMachineName = "Weapon2",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                baseRechargeInterval = 1f,
+                /*baseRechargeInterval=15f,*/
+                baseMaxStock = 1,
+
+                rechargeStock = 1,
+                requiredStock = 1,
+                stockToConsume = 1,
+
+                resetCooldownTimerOnUse = false,
+                fullRestockOnAssign = true,
+                dontAllowPastMaxStocks = false,
+                mustKeyPress = false,
+                beginSkillCooldownOnSkillEnd = false,
+
+                isCombatSkill = true,
+                canceledFromSprinting = false,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
+
+
+            });
+
+            HuntressTrackingSkillDef secondarySkillDef3 = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            {
+                skillName = "HenryGun",
+                skillNameToken = VELIAERIS_PREFIX + "VELIA_SECONDARY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "VELIA_SECONDARY_DESCRIPTION",
+                keywordTokens = new string[] { "KEYWORD_AGILE",VELIAERIS_PREFIX+"ABYSS_INFORMATION", VELIAERIS_PREFIX + "PERCENT_HEALTH_DAMAGE" },
+                skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
+
+                activationState = new EntityStates.SerializableEntityStateType(typeof(CircularSlash)),
+                activationStateMachineName = "Weapon2",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                baseRechargeInterval = 1f,
+                /*baseRechargeInterval=15f,*/
+                baseMaxStock = 1,
+
+                rechargeStock = 1,
+                requiredStock = 1,
+                stockToConsume = 1,
+
+                resetCooldownTimerOnUse = false,
+                fullRestockOnAssign = true,
+                dontAllowPastMaxStocks = false,
+                mustKeyPress = false,
+                beginSkillCooldownOnSkillEnd = false,
+
+                isCombatSkill = true,
+                canceledFromSprinting = false,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
+
+
+            });
+
+            Skills.AddSecondarySkills(bodyPrefab, secondarySkillDef1,secondarySkillDef2,secondarySkillDef3);
         }
 
         public void AddUtiitySkills()
@@ -338,15 +434,15 @@ namespace VeliaerisMod.Survivors.Veliaeris
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
 
             //here's a skilldef of a typical movement skill.
-            SkillDef utilitySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            SkillDef split = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryRoll",
-                skillNameToken = VELIAERIS_PREFIX + "UTILITY_ROLL_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "UTILITY_ROLL_DESCRIPTION",
+                skillName = "split",
+                skillNameToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_DESCRIPTION_MENU",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
-
+                keywordTokens = new string[] { "KEYWORD_AGILE" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(Split)),
-                activationStateMachineName = "Slide",
+                activationStateMachineName = "Switch",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
                 baseRechargeInterval = 4f,
@@ -367,8 +463,36 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 cancelSprintingOnActivation = false,
                 forceSprintDuringState = false,
             });
+            SkillDef merge = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName = "merge",
+                skillNameToken = VELIAERIS_PREFIX + "MERGE_UTILITY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "MERGE_UTILITY_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(MergeandShift)),
+                activationStateMachineName = "Switch",
+                interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-            Skills.AddUtilitySkills(bodyPrefab, utilitySkillDef1);
+                baseRechargeInterval = 4f,
+                baseMaxStock = 1,
+
+                rechargeStock = 1,
+                requiredStock = 1,
+                stockToConsume = 1,
+
+                resetCooldownTimerOnUse = false,
+                fullRestockOnAssign = true,
+                dontAllowPastMaxStocks = false,
+                mustKeyPress = false,
+                beginSkillCooldownOnSkillEnd = false,
+
+                isCombatSkill = false,
+                canceledFromSprinting = false,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
+            });
+            Skills.AddUtilitySkills(bodyPrefab, split,merge);
         }
 
         public void AddSpecialSkills()
@@ -379,13 +503,13 @@ namespace VeliaerisMod.Survivors.Veliaeris
             SkillDef specialSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HenryBomb",
-                skillNameToken = VELIAERIS_PREFIX + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "SPECIAL_BOMB_DESCRIPTION",
+                skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_SPECIAL_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "VELIAERIS_SPECIAL_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
-
+                keywordTokens = new string[] { "KEYWORD_AGILE" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.VoidDetonator)),
                 //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Weapon2", interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationStateMachineName = "Detonator", interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
                 baseRechargeInterval = 10f,
@@ -394,7 +518,45 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 mustKeyPress = false,
             });
 
-            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef1);
+            SkillDef specialSkillDef2 = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName = "HenryBomb",
+                skillNameToken = VELIAERIS_PREFIX + "ERIS_SPECIAL_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_SPECIAL_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(EldritchHealing)),
+                //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
+                activationStateMachineName = "Detonator",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                baseMaxStock = 1,
+                baseRechargeInterval = 10f,
+
+                isCombatSkill = true,
+                mustKeyPress = false,
+            });
+
+            SkillDef specialSkillDef3 = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName = "HenryBomb",
+                skillNameToken = VELIAERIS_PREFIX + "VELIA_SPECIAL_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "VELIA_SPECIAL_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(BlessingsFromBeyond)),
+                //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
+                activationStateMachineName = "Detonator",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                baseMaxStock = 1,
+                baseRechargeInterval = 10f,
+
+                isCombatSkill = true,
+                mustKeyPress = false,
+            });
+
+            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef1,specialSkillDef2,specialSkillDef3);
             
         }
         #endregion skills
@@ -480,7 +642,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
             //Modules.Prefabs.CloneDopplegangerMaster(bodyPrefab, masterName, "Merc");
 
             //how to set up AI in code
-            HenryAI.Init(bodyPrefab, masterName);
+            VeliaerisAI.Init(bodyPrefab, masterName);
 
             //how to load a master set up in unity, can be an empty gameobject with just AISkillDriver components
             //assetBundle.LoadMaster(bodyPrefab, masterName);
@@ -493,22 +655,115 @@ namespace VeliaerisMod.Survivors.Veliaeris
             On.RoR2.HealthComponent.TakeDamage += this.HealthComponent_TakeDamage;
             On.RoR2.BuffCatalog.Init += BuffCatalog_Init;
             RoR2.Stage.onStageStartGlobal += this.stageSetup;
-            RoR2.Stage.onServerStageComplete += this.stageSetup;
-            On.RoR2.CharacterBody.OnInventoryChanged += bodyChange;
+            On.RoR2.CharacterBody.OnInventoryChanged += inventoryChange;
             CharacterBody.onBodyStartGlobal += this.bodySetup;
- //           On.RoR2.CharacterBody.OnDeathStart
+            On.RoR2.CharacterMaster.OnBodyDeath += this.deathEffect;
+            On.RoR2.GlobalEventManager.OnHitEnemy += this.allyAbyss;
+            On.RoR2.Stage.BeginServer += this.clearPreviousAttempts;
+            On.RoR2.SceneDirector.Start += this.obtainSceneName;
         }
 
-        private void bodyChange(On.RoR2.CharacterBody.orig_OnInventoryChanged orig, CharacterBody body)
+        
+
+        private void obtainSceneName(On.RoR2.SceneDirector.orig_Start orig, SceneDirector self)
         {
-            if (body == null)
+            String StageIdentity = SceneManager.GetActiveScene().name;
+            System.Console.WriteLine("Stage Name: " + StageIdentity);
+        }
+
+        private void clearPreviousAttempts(On.RoR2.Stage.orig_BeginServer orig, Stage self)
+        {
+            ReviveTimer.ReviveDisabledTimer = 0f;
+            HeldState.gatheredPrimary = 0;
+            HeldState.hereticOverridesPrimary.Clear();
+            HeldState.gatheredSecondary = 0;
+            HeldState.hereticOverridesSecondary.Clear();
+            HeldState.gatheredUtility = 0;
+            HeldState.hereticOverridesUtility.Clear();
+            HeldState.gatheredSpecial = 0;
+            HeldState.hereticOverridesSpecial.Clear();
+        }
+
+        private void allyAbyss(On.RoR2.GlobalEventManager.orig_OnHitEnemy orig, GlobalEventManager self, DamageInfo damageInfo, GameObject victim)
+        {
+            
+            CharacterBody attackerBody = damageInfo.attacker.GetComponent<CharacterBody>();
+            CharacterBody victimBody = victim.GetComponent<CharacterBody>();
+            if (attackerBody.HasBuff(VeliaerisBuffs.lesserSistersBlessing))
             {
-                System.Console.WriteLine("The body is null you fool");
+
+                damageInfo.AddModdedDamageType(DamageTypes.AbyssCorrosion);
+                victimBody.healthComponent.TakeDamage(damageInfo);
+//                System.Console.WriteLine("Inflicting abyss");
+//                DamageAPI.AddModdedDamageType(damageInfo, DamageTypes.AbyssCorrosion);
+                
             }
-            else
+
+        }
+
+        private void deathEffect(On.RoR2.CharacterMaster.orig_OnBodyDeath orig, CharacterMaster self, CharacterBody body)
+        {
+            
+            if (NetworkServer.active)
             {
-                System.Console.WriteLine("Not null?");
-            }
+
+                if (body.ToString().Contains("VeliaerisBody"))
+                {
+                    if (VeliaerisPlugin.VeliaerisStates != VeliaerisState.Veliaeris&&ReviveTimer.ReviveDisabledTimer<=0)
+                    {
+                        justDied = true;
+                        self.lostBodyToDeath = false;
+                        Vector3 vector = body.footPosition;
+                        var temporaryBody = self.destroyOnBodyDeath;
+                        self.destroyOnBodyDeath = false;
+                        HeldState.destroyVeliaerisCorpse = true;
+                        orig(self, body);
+                        self.destroyOnBodyDeath = temporaryBody;
+                        self.preventGameOver = true;
+                        self.preventRespawnUntilNextStageServer = true;
+                        
+                        self.Respawn(vector, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
+                        self.ResetLifeStopwatch();
+                        CharacterBody revivedbody = self.GetBody();
+                        ReviveTimer.timeUntilSistersRevival = 20f;
+                        ReviveTimer.ReviveDisabledTimer = 300f;
+                        SkillLocator switchSkills = revivedbody.GetComponent<SkillLocator>();
+                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+                        {
+                            VeliaerisPlugin.VeliaerisStates = VeliaerisState.Velia;
+                        }
+                        else if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+                        {
+                            VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
+                        }
+                        HeldState.velState = VeliaerisPlugin.VeliaerisStates;
+                        VeliaerisPlugin.previousSplitSate = HeldState.velState;
+                        MergeandShift.SkillSwitch(switchSkills,false);
+                        revivedbody.AddTimedBuffAuthority(VeliaerisBuffs.missingSibling.buffIndex, 20f);
+                    }
+                    else
+                    {
+                        ReviveTimer.timeUntilSistersRevival = 0f;
+                        ReviveTimer.ReviveDisabledTimer = 0f;
+                        orig(self, body);
+                    }
+                }
+
+
+            }        
+            orig(self,body);
+        }
+
+        private void inventoryChange(On.RoR2.CharacterBody.orig_OnInventoryChanged orig, CharacterBody body)
+        {
+            //if (body == null)
+            //{
+            //    System.Console.WriteLine("The body is null you fool");
+            //}
+            //else
+            //{
+            //    System.Console.WriteLine("Not null?");
+            //}
             try
             {
                 orig(body);
@@ -517,11 +772,23 @@ namespace VeliaerisMod.Survivors.Veliaeris
             {
                 return;
             }
-            System.Console.WriteLine("exist");
+//            System.Console.WriteLine("exist");
             try
             {
                 if (body.ToString().Contains("VeliaerisBody"))
                 {
+
+                    if (VeliaerisPlugin.hasVoid)
+                    {
+                        Inventory inventory = body.inventory;
+                        if (inventory)
+                        {
+                            voidInfluence = 0;
+
+                            voidInfluence = inventory.GetTotalItemCountOfTier(ItemTier.VoidTier1) + inventory.GetTotalItemCountOfTier(ItemTier.VoidTier2) + inventory.GetTotalItemCountOfTier(ItemTier.VoidTier3) + inventory.GetTotalItemCountOfTier(ItemTier.VoidBoss);
+                        }
+                    }
+                    System.Console.WriteLine("VoidInfluence: " + voidInfluence);
 
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) < HeldState.gatheredPrimary && HeldState.gatheredPrimary != 0)
                     {
@@ -594,111 +861,81 @@ namespace VeliaerisMod.Survivors.Veliaeris
                         HeldState.hereticOverridesSpecial.Clear();
                     }
 
-                    System.Console.WriteLine("Before inventory checks");
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) > HeldState.gatheredPrimary)
                     {
-                        System.Console.WriteLine("inventory check");
                         if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
                         {
                             HeldState.hereticOverridesPrimary.Add(VeliaerisPlugin.VeliaerisStates);
                         }
-                        System.Console.WriteLine("post add");
                         HeldState.gatheredPrimary++;
-                        System.Console.WriteLine("post increase");
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarSecondaryReplacement) > HeldState.gatheredSecondary)
                     {
-                        System.Console.WriteLine("inventory check");
                         if (!HeldState.hereticOverridesSecondary.Contains(VeliaerisPlugin.VeliaerisStates))
                         {
                             HeldState.hereticOverridesSecondary.Add(VeliaerisPlugin.VeliaerisStates);
                         }
-                        System.Console.WriteLine("post add");
                         HeldState.gatheredSecondary++;
-                        System.Console.WriteLine("post increase");
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarUtilityReplacement) > HeldState.gatheredUtility)
                     {
-                        System.Console.WriteLine("inventory check");
                         if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
                         {
                             HeldState.hereticOverridesUtility.Add(VeliaerisPlugin.VeliaerisStates);
                         }
-                        System.Console.WriteLine("post add");
                         HeldState.gatheredUtility++;
-                        System.Console.WriteLine("post increase");
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) > HeldState.gatheredSpecial)
                     {
-                        System.Console.WriteLine("inventory check");
                         if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
                         {
                             HeldState.hereticOverridesSpecial.Add(VeliaerisPlugin.VeliaerisStates);
                         }
-                        System.Console.WriteLine("post add");
                         HeldState.gatheredSpecial++;
-                        System.Console.WriteLine("post increase");
                     }
-                }
-                if (HeldState.hereticOverridesPrimary.Count > 0)
-                {
-                    System.Console.WriteLine("HereticOverride: " + HeldState.hereticOverridesPrimary[0]);
+                    SkillLocator skillLocator = body.GetComponent<SkillLocator>();
+                    MergeandShift.SkillSwitch(skillLocator, true);
                 }
 
-                SkillLocator skillLocator = body.GetComponent<SkillLocator>();
-                MergeandShift.SkillSwitch(skillLocator);
             }
             catch { return; }
         }
 
         private void bodySetup(CharacterBody body)
         {
-            
             if (body != null)
             {
-            //    System.Console.WriteLine("Body grabbed: " + body);
+                //System.Console.WriteLine("Body grabbed: " + body);
+            
                 if (body.ToString().Contains("VeliaerisBody"))
                 {
-//                    System.Console.WriteLine("Character body");
-                    SkillLocator skillLocator = body.GetComponent<SkillLocator>();
-                    //System.Console.WriteLine("passivename1: " + this,passiveSkillSlot.skillDef);
-  //                  System.Console.WriteLine("Current grabbed skillocator: " + skillLocator);
-                    MergeandShift.SkillSwitch(skillLocator);
+                    if (Run.instance.stageClearCount < 1 && !justDied)
+                    {
+
+                        VeliaerisState velstate;
+                        velstate = body.GetComponent<VeliaerisPassive>().getStartState();
+                        VeliaerisPlugin.VeliaerisStates = velstate;
+                        if (velstate == VeliaerisState.Velia || velstate == VeliaerisState.Eris)
+                        {
+                            VeliaerisPlugin.firstChange = false;
+                            VeliaerisPlugin.previousSplitSate = velstate;
+                        }
+                        SkillLocator skillLocator = body.GetComponent<SkillLocator>();
+                        //                  System.Console.WriteLine("Current grabbed skillocator: " + skillLocator);
+                        MergeandShift.SkillSwitch(skillLocator, false);
+                        ReviveTimer.ReviveDisabledTimer = 0f;
+                    }
                 }
             }
 
         }
 
         private void stageSetup(Stage stage)
-        {   VeliaerisPassive skillPassive = bodyPrefab.GetComponent<VeliaerisPassive>();
-            CharacterBody body = bodyPrefab.GetComponent<CharacterBody>();
-            System.Console.WriteLine("stages cleared: " + Run.instance.stageClearCount);
-//            if(Run.instance.stageClearCount< 1)
-  //          {
-                System.Console.WriteLine("Passive set: " + skillPassive.getStartState());
-            //    System.Console.WriteLine(HeldState.velState);
-            //    HeldState.velState = VeliaerisState.Veliaeris;
-    //        }
-            //System.Console.WriteLine("heldstate: " + HeldState.velState);
-            //System.Console.WriteLine("VeliaerisState pre global" + VeliaerisPlugin.VeliaerisStates);
+        {
+//            System.Console.WriteLine("Check outlog");
+            ReviveTimer.stageStarted = false;
+            ReviveTimer.startUpTimer = 0f;
             VeliaerisPlugin.VeliaerisStates = HeldState.velState;
-            //System.Console.WriteLine("Veliaerisstate post global" + VeliaerisPlugin.VeliaerisStates);
-            //System.Console.WriteLine("Current global velstate: " + HeldState.velState);
-
-            SkillLocator skillLocator = body.GetComponent<SkillLocator>();
-            //System.Console.WriteLine("Current grabbed skillocator: " + skillLocator);
-            MergeandShift.SkillSwitch(skillLocator);
-
-
-            //if (SkillLocators == null)
-            //{
-            //    System.Console.WriteLine("body.skillocator is null");
-            //}
-            //else
-            //{
-            //    System.Console.WriteLine("body.skilllocator is not null");
-            //}
-            //            MergeandShift.SkillSwitch(body.skillLocator);
         }
 
         private void BuffCatalog_Init(On.RoR2.BuffCatalog.orig_Init orig)
@@ -710,10 +947,10 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 if (buffName.Contains("abyss"))
                 {
                     InflictionBuffs.Add(BuffCatalog.buffDefs[i].buffIndex);
-                    System.Console.WriteLine("an abyss was found");
+              //      System.Console.WriteLine("an abyss was found");
                     if (!BuffCatalog.buffDefs[i].canStack)
                     {
-                        System.Console.WriteLine("A void was found");
+//                        System.Console.WriteLine("A void was found");
                         InflictionBuffs.Add(BuffCatalog.buffDefs[i].buffIndex);
                         InflictionBuffs.Add(BuffCatalog.buffDefs[i].buffIndex);
                     }
@@ -725,10 +962,17 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
         private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
-            //if(damageInfo.attacker.GetComponent<CharacterBody>().GetBuffCount(VeliaerisBuffs.lesserSistersBlessing) > 0)
-            //{
-            //    DamageAPI.AddModdedDamageType(damageInfo, DamageTypes.AbyssCorrosion);
-            //}
+            /*if (combinedHealth >= this.fullCombinedHealth * 0.9f)
+						{
+							int itemCount2 = master.inventory.GetItemCount(RoR2Content.Items.Crowbar);
+							if (itemCount2 > 0)
+							{
+								num *= 1f + 0.75f * (float)itemCount2;
+							}
+						}*/
+
+            //minus from damage info for damage reduction
+            //attackerBody.healthComponent.AddBarrier
             if (DamageAPI.HasModdedDamageType(damageInfo, DamageTypes.AbyssCorrosion))
             {
                 
@@ -801,34 +1045,59 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
         {
-
-
+            if (sender.HasBuff(VeliaerisBuffs.switchInvincibility))
+            {
+                sender.bodyFlags |= CharacterBody.BodyFlags.ImmuneToExecutes;
+            }
             if (sender.HasBuff(VeliaerisBuffs.armorDesolation))
             {
                 args.armorAdd -= sender.GetBuffCount(VeliaerisBuffs.armorDesolation) * desolationReduction;
             }
-
+            
             if (sender.HasBuff(VeliaerisBuffs.sistersBlessing))
             {
-                sender.maxHealth *=1.5f;
-//                args.healthMultAdd *= 1.5f;
-                args.shieldMultAdd *= 1.5f;
-                args.attackSpeedMultAdd *= 1.7f;
-                args.moveSpeedMultAdd *= 1.3f;
+                args.attackSpeedMultAdd += 1.2f;
+                args.moveSpeedMultAdd += 0.7f;
                 args.armorAdd += 20f;
-                args.damageMultAdd *= 3f;
-                args.regenMultAdd *= 4f;
+                args.damageMultAdd += 1.1f;
+                args.regenMultAdd += 2f;
+                
                 
                 sender.bodyFlags |= CharacterBody.BodyFlags.ImmuneToVoidDeath;
             }
             if (sender.HasBuff(VeliaerisBuffs.lesserSistersBlessing))
             {
                 args.armorAdd+= 10f;
-                args.attackSpeedMultAdd *= 1.2f;
-                args.moveSpeedMultAdd *= 1.3f;
-                args.damageMultAdd *= 1.5f;
-                args.regenMultAdd *= 2f;
+                args.attackSpeedMultAdd += 0.8f;
+                args.moveSpeedMultAdd += 0.25f;
+                args.damageMultAdd += 0.5f;
                 sender.bodyFlags |= CharacterBody.BodyFlags.ImmuneToVoidDeath;
+            }
+            if(VeliaerisPlugin.VeliaerisStates==VeliaerisState.Veliaeris && sender.ToString().Contains("VeliaerisBody") && VeliaerisPlugin.hasVoid)
+            {
+                args.baseHealthAdd += (sender.baseMaxHealth * 0.05f) * voidInfluence;
+                args.damageMultAdd += 0.125f * voidInfluence;
+            }
+            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris && sender.ToString().Contains("VeliaerisBody"))
+            {
+//                System.Console.WriteLine("is eris");
+                args.baseHealthAdd += sender.baseMaxHealth * 0.75f;
+                if (VeliaerisPlugin.hasVoid)
+                {
+                    args.baseHealthAdd += (sender.baseMaxHealth * 0.1f) *voidInfluence;
+                }
+//                args.baseDamageAdd -= sender.baseDamage;
+                args.armorAdd -= 10f;
+            }
+            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia && sender.ToString().Contains("VeliaerisBody"))
+            {
+                args.baseHealthAdd -= sender.baseMaxHealth * 0.25f;
+                args.damageMultAdd += 0.5f;
+                if (VeliaerisPlugin.hasVoid)
+                {
+                    args.damageMultAdd += 0.25f*voidInfluence;
+                }
+                args.armorAdd += 10f;
             }
 
         }
@@ -844,5 +1113,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
         public static float DotDuration = 10f;
         public static float CollapseExtraDuration = 3f;
         public static float desolationReduction = 10f;
+        public static bool unstable = false;
+        public static bool justDied = false;
+        private DamageColorIndex damageColor = DamageColorIndex.Void;
+        public static int voidInfluence;
     }
 }

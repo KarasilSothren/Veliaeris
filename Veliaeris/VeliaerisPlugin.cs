@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using R2API.Utils;
+using RoR2.ContentManagement;
 using RoR2.ExpansionManagement;
 using System.Security;
 using System.Security.Permissions;
@@ -29,23 +30,22 @@ namespace VeliaerisMod
         public const string DEVELOPER_PREFIX = "KARASIL";
 
         public static VeliaerisPlugin instance;
-        public static VeliaerisState previousSplitSate;
+        public static VeliaerisState previousSplitSate = VeliaerisState.Eris;
         public static VeliaerisState VeliaerisStates;
         public VeliaerisPassive passiveSkillSlot;
         public static bool firstChange = true;
         public static bool hasVoid = true;
-
         void Awake()
         {
             try
             {
-                Addressables.LoadAssetAsync<ExpansionDef>("RoR2/DLC1/Common/DLC1.asset").WaitForCompletion();
+                ReadOnlyContentPack? sotvPack = ContentManager.FindContentPack("RoR2.DLC1");
             }
             catch
             {
                 hasVoid = false;
             }
-            System.Console.WriteLine("Awoken!");
+            System.Console.WriteLine("Check for void: " + hasVoid);
             instance = this;
 
             //easy to use logger

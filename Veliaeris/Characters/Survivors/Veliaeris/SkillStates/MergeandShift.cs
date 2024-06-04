@@ -20,15 +20,23 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
     {
         
         private float stopwatch;
-
-        
-
+        public static SkillDef split;
+        public static SkillDef reductionScythe;
+        public static SkillDef selfBuffer;
+        public static SkillDef circularSlash;
+        public static VeliaerisRespawnSkillDef MergeandShiftSkill;
+        public static SkillDef basicScythe;
+        public static HuntressTrackingSkillDef CorruptAndHeal;
+        public static HuntressTrackingSkillDef voidSkillDef;
+        public static SkillDef allyBuff;
+        public static SkillDef voidDetonation;
+        public static SkillDef eldritchHealing;
         public override void OnEnter()
         {
-            System.Console.WriteLine("Entered MergeandShift");
             this.stopwatch = 0f;
-            System.Console.WriteLine("entered state",VeliaerisPlugin.VeliaerisStates);
-            
+            CharacterBody body;
+            body = GetComponent<CharacterBody>();
+            body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
         }
 
         public override void FixedUpdate()
@@ -58,16 +66,17 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     HeldState.velState = VeliaerisState.Eris;
                 }
 
-                SkillSwitch(skillLocator);
+                SkillSwitch(skillLocator,false);
                 this.outer.SetNextStateToMain();
                 return;
             }
             else if (base.inputBank.skill3.justReleased)
             {
+                System.Console.WriteLine(VeliaerisPlugin.previousSplitSate);
                 VeliaerisPlugin.VeliaerisStates = VeliaerisState.Veliaeris;
                 HeldState.velState = VeliaerisState.Veliaeris;
                 //System.Console.WriteLine("was pressed");
-                SkillSwitch(skillLocator);
+                SkillSwitch(skillLocator, false);
                 this.outer.SetNextStateToMain();
                 return;
             }
@@ -76,34 +85,38 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 
         }
 
+        
+
         public override void OnExit() {
             base.OnExit();
         }
         
-
         
         
 
-        public static void SkillSwitch(SkillLocator skillLocator)
+        public static void SkillSwitch(SkillLocator skillLocator, bool onHereticPickup)
         {
             //System.Console.WriteLine("Skillocator info" + skillLocator);
             //System.Console.WriteLine("Exit state: " + VeliaerisPlugin.VeliaerisStates);
             //System.Console.WriteLine("exit held state: " + HeldState.velState);
-            AssetBundle assets = VeliaerisSurvivor.instance.assetBundle;
-                    string prefix = VeliaerisSurvivor.VELIAERIS_PREFIX;
 
-            SkillDef MergeandShift = Skills.CreateSkillDef(new SkillDefInfo
+            
+
+            AssetBundle assets = VeliaerisSurvivor.instance.assetBundle;
+            string prefix = VeliaerisSurvivor.VELIAERIS_PREFIX;
+
+            MergeandShiftSkill = Skills.CreateSkillDef<VeliaerisRespawnSkillDef>(new SkillDefInfo
             {
                 skillName = "Merge and Shift",
-                skillNameToken = prefix + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = prefix + "UTILITY_ROLL_DESCRIPTION",
+                skillNameToken = prefix + "MERGE_UTILITY_NAME",
+                skillDescriptionToken = prefix + "MERGE_UTILITY_DESCRIPTION",
                 skillIcon = assets.LoadAsset<Sprite>("texUtilityIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(MergeandShift)),
-                activationStateMachineName = "Slide",
+                activationStateMachineName = "Switch",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 4f,
+                baseRechargeInterval = 15f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -122,18 +135,18 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 forceSprintDuringState = false,
             });
 
-            SkillDef split = Skills.CreateSkillDef(new SkillDefInfo
+            split = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "Split",
-                skillNameToken = prefix + "UTILITY_ROLL_NAME",
-                skillDescriptionToken = prefix + "UTILITY_ROLL_DESCRIPTION",
+                skillNameToken = prefix + "SPLIT_UTILITY_NAME",
+                skillDescriptionToken = prefix + "SPLIT_UTILITY_DESCRIPTION_"+VeliaerisPlugin.previousSplitSate,
                 skillIcon = assets.LoadAsset<Sprite>("texUtilityIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(Split)),
-                activationStateMachineName = "Slide",
+                activationStateMachineName = "Switch",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 4f,
+                baseRechargeInterval = 15f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -154,10 +167,10 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 
 
 
-            SkillDef basicScythe = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
+            basicScythe = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
             (
                "BasicScythe",
-               prefix + "PRIMARY_SLASH_NAME",
+               prefix + "VELIAERIS_PRIMARY_NAME",
                prefix + "PRIMARY_SLASH_DESCRIPTION",
                assets.LoadAsset<Sprite>("texPrimaryIcon"),
                new EntityStates.SerializableEntityStateType(typeof(SkillStates.BasicScytheSlash)),
@@ -165,11 +178,11 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                true
             ));
 
-            SkillDef reductionScythe = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
+            reductionScythe = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
             (
-               "BasicScythe",
-               prefix + "PRIMARY_SLASH_NAME",
-               prefix + "PRIMARY_SLASH_DESCRIPTION",
+               "VoidScythe",
+               prefix + "VELIA_PRIMAR_NAME",
+               prefix + "VELIA_PRIMARY_DESCRIPTION",
                assets.LoadAsset<Sprite>("texPrimaryIcon"),
                new EntityStates.SerializableEntityStateType(typeof(BasicScytheSlashWithReductions)),
                "Weapon",
@@ -177,11 +190,11 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             ));
 
 
-            HuntressTrackingSkillDef CorruptAndHeal = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            CorruptAndHeal = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
             {
                 skillName = "HealandCorrupt",
-                skillNameToken = prefix + "SECONDARY_GUN_NAME",
-                skillDescriptionToken = prefix + "SECONDARY_GUN_DESCRIPTION",
+                skillNameToken = prefix + "VELIAERIS_SECONDARY_NAME",
+                skillDescriptionToken = prefix + "VELIAERIS_SECONDARY_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assets.LoadAsset<Sprite>("texSecondaryIcon"),
 
@@ -189,7 +202,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 activationStateMachineName = "Weapon2",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                baseRechargeInterval=15f,
+                baseRechargeInterval=5f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -212,33 +225,49 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 
 
 
-            HuntressTrackingSkillDef voidSkillDef = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
-            (
-                "BasicScythe",
-               prefix + "PRIMARY_SLASH_NAME",
-               prefix + "PRIMARY_SLASH_DESCRIPTION",
-               assets.LoadAsset<Sprite>("texPrimaryIcon"),
-               new EntityStates.SerializableEntityStateType(typeof(graspOfOblivion)),
-               "Weapon",
-               true
+            voidSkillDef = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            {
+                skillName = "Grasp",
+                skillNameToken = prefix + "ERIS_PRIMARY_NAME",
+                skillDescriptionToken = prefix + "ERIS_PRIMARY_DESCRIPTION",
+                skillIcon = assets.LoadAsset<Sprite>("texPrimaryIcon"),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(GraspOfOblivion)),
+                activationStateMachineName = "Weapon",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                baseRechargeInterval = 2f,
+                baseMaxStock = 1,
+
+                rechargeStock = 1,
+                requiredStock = 1,
+                stockToConsume = 1,
+
+                resetCooldownTimerOnUse = false,
+                fullRestockOnAssign = true,
+                dontAllowPastMaxStocks = false,
+                mustKeyPress = false,
+                beginSkillCooldownOnSkillEnd = false,
+
+                isCombatSkill = true,
+                canceledFromSprinting = false,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
 
 
-            ));
+            });
 
-            SkillDef allyBuff = Skills.CreateSkillDef(new SkillDefInfo
+            allyBuff = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "TeamBuff",
-                skillNameToken = prefix + "PRIMARY_SLASH_NAME",
-                skillDescriptionToken = prefix + "SECONDARY_GUN_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                skillNameToken = prefix + "ERIS_SECONDARY_NAME",
+                skillDescriptionToken = prefix + "ERIS_SECONDARY_DESCRIPTION",
                 skillIcon = assets.LoadAsset<Sprite>("texSecondaryIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(GivenStrength)),
-                activationStateMachineName = "Weapon2",
+                activationStateMachineName = "Buff",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                baseRechargeInterval = 1f,
-                /*baseRechargeInterval=15f,*/
+                baseRechargeInterval = 15f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -253,17 +282,17 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 
                 isCombatSkill = true,
                 canceledFromSprinting = false,
-                cancelSprintingOnActivation = false,
+                cancelSprintingOnActivation = true,
                 forceSprintDuringState = false,
 
 
             });
 
-            SkillDef circularSlash = Skills.CreateSkillDef(new SkillDefInfo
+            circularSlash = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "AoESlash",
-                skillNameToken = prefix + "PRIMARY_SLASH_NAME",
-                skillDescriptionToken = prefix + "PRIMARY_SLASH_DESCRIPTION",
+                skillNameToken = prefix + "VELIA_SECONDARY_NAME",
+                skillDescriptionToken = prefix + "VELIA_SECONDARY_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assets.LoadAsset<Sprite>("texPrimaryIcon"),
 
@@ -271,8 +300,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 activationStateMachineName = "Weapon2",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                baseRechargeInterval = 1f,
-                /*baseRechargeInterval=15f,*/
+                baseRechargeInterval = 20f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -293,120 +321,156 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 
             });
 
-            SkillDef voidDetonation = Skills.CreateSkillDef(new SkillDefInfo
+            voidDetonation = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "VoidDetonator",
-                skillNameToken = prefix + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = prefix + "SPECIAL_BOMB_DESCRIPTION",
+                skillNameToken = prefix + "VELIAERIS_SPECIAL_NAME",
+                skillDescriptionToken = prefix + "VELIAERIS_SPECIAL_DESCRIPTION",
                 skillIcon = assets.LoadAsset<Sprite>("texSpecialIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.VoidDetonator)),
                 //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Weapon2",
+                activationStateMachineName = "Detonator",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 30f,
 
                 isCombatSkill = true,
                 mustKeyPress = false,
+                cancelSprintingOnActivation = false,
             });
 
 
-            SkillDef eldritchHealing = Skills.CreateSkillDef(new SkillDefInfo
+            eldritchHealing = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HealingForEveryone",
-                skillNameToken = prefix + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = prefix + "SPECIAL_BOMB_DESCRIPTION",
+                skillNameToken = prefix + "ERIS_SPECIAL_NAME",
+                skillDescriptionToken = prefix + "ERIS_SPECIAL_DESCRIPTION",
                 skillIcon = assets.LoadAsset<Sprite>("texSpecialIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(EldritchHealing)),
                 //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Weapon2",
+                activationStateMachineName = "Detonator",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 20f,
 
                 isCombatSkill = true,
                 mustKeyPress = false,
+                cancelSprintingOnActivation = true,
             });
 
 
-            SkillDef selfBuffer = Skills.CreateSkillDef(new SkillDefInfo
+            selfBuffer = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "SelfBuff",
-                skillNameToken = prefix + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = prefix + "SPECIAL_BOMB_DESCRIPTION",
+                skillNameToken = prefix + "VELIA_SPECIAL_NAME",
+                skillDescriptionToken = prefix + "VELIA_SPECIAL_DESCRIPTION",
                 skillIcon = assets.LoadAsset<Sprite>("texSpecialIcon"),
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(blessingsFromBeyond)),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(BlessingsFromBeyond)),
                 //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Weapon2",
+                activationStateMachineName = "Buff",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 30f,
 
                 isCombatSkill = true,
                 mustKeyPress = false,
+                cancelSprintingOnActivation = false,
             });
 
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
-            {
-                skillLocator.primary.SetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.utility.SetSkillOverride(skillLocator.utility, split, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.secondary.SetSkillOverride(skillLocator.secondary, CorruptAndHeal, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.special.SetSkillOverride(skillLocator.special,voidDetonation,GenericSkill.SkillOverridePriority.Contextual);
 
-            }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
-            {
-                System.Console.WriteLine("Entered Eris Switch");
-                skillLocator.special.SetSkillOverride(skillLocator.special, eldritchHealing, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.utility.SetSkillOverride(skillLocator.utility, MergeandShift, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.secondary.SetSkillOverride(skillLocator.secondary, allyBuff, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.primary.SetSkillOverride(skillLocator.primary,voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
-            }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
-            {
-                System.Console.WriteLine("Entered Velia Switch");
-                skillLocator.utility.SetSkillOverride(skillLocator.utility, MergeandShift, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.secondary.SetSkillOverride(skillLocator.secondary, circularSlash, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.primary.SetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
-                skillLocator.special.SetSkillOverride(skillLocator.special,selfBuffer, GenericSkill.SkillOverridePriority.Contextual);
-            }
-            System.Console.WriteLine("output");
-            if (HeldState.hereticOverridesPrimary.Count > 0)
-            {
-                System.Console.WriteLine("heldcount: " + HeldState.hereticOverridesPrimary.Count);
-                System.Console.WriteLine("Heldstate value: " + HeldState.hereticOverridesPrimary[0]);
-            }
+            //            if (onDeath)
+            //            {
+            //                //System.Console.WriteLine("Check form");
+            //                //System.Console.WriteLine("Form: " + VeliaerisPlugin.VeliaerisStates);
+            //                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+            //                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
+            //                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+            //                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+            //                {
+            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
+            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
+
+            ////                    System.Console.WriteLine("unset velia?");
+            //                }
+            //  //              System.Console.WriteLine("checking");
+            //                if(VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+            //                {
+            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary,voidSkillDef,GenericSkill.SkillOverridePriority.Contextual);
+            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary,reductionScythe , GenericSkill.SkillOverridePriority.Contextual);
+            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
+            //    //                System.Console.WriteLine("unset eris?");
+            //                }
+            //            }
+            //      System.Console.WriteLine("end of ondeathevents");
+                
+                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
+                {
+                    skillLocator.primary.SetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
+                if (!onHereticPickup)
+                {
+                    skillLocator.utility.SetSkillOverride(skillLocator.utility, split, GenericSkill.SkillOverridePriority.Contextual);
+                }
+                    skillLocator.secondary.SetSkillOverride(skillLocator.secondary, CorruptAndHeal, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.special.SetSkillOverride(skillLocator.special, voidDetonation, GenericSkill.SkillOverridePriority.Contextual);
+
+                }
+                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+                {
+                    //                System.Console.WriteLine("Entered Eris");
+                    skillLocator.special.SetSkillOverride(skillLocator.special, eldritchHealing, GenericSkill.SkillOverridePriority.Contextual);
+                if (!onHereticPickup)
+                {
+                    skillLocator.utility.SetSkillOverride(skillLocator.utility, MergeandShiftSkill, GenericSkill.SkillOverridePriority.Contextual);
+                }
+                    skillLocator.secondary.SetSkillOverride(skillLocator.secondary, allyBuff, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.primary.SetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+                }
+                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+                {
+                if (!onHereticPickup)
+                {
+                    skillLocator.utility.SetSkillOverride(skillLocator.utility, MergeandShiftSkill, GenericSkill.SkillOverridePriority.Contextual);
+                }
+                    skillLocator.secondary.SetSkillOverride(skillLocator.secondary, circularSlash, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.primary.SetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.special.SetSkillOverride(skillLocator.special, selfBuffer, GenericSkill.SkillOverridePriority.Contextual);
+                }
+            int hereticLimit = 0;
             if (HeldState.hereticOverridesPrimary.Count > 0 || HeldState.hereticOverridesSecondary.Count > 0 || HeldState.hereticOverridesUtility.Count > 0 || HeldState.hereticOverridesSpecial.Count > 0)
             {
-                System.Console.WriteLine("Entered if");
                 if ((HeldState.hereticOverridesPrimary.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates==VeliaerisState.Veliaeris) || (HeldState.hereticOverridesPrimary.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates ==VeliaerisState.Eris) || (HeldState.hereticOverridesPrimary.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
                 {
-                   
+                    hereticLimit++;
                     skillLocator.primary.UnsetSkillOverride(skillLocator.primary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarPrimaryReplacement")), GenericSkill.SkillOverridePriority.Contextual);
                     skillLocator.primary.SetSkillOverride(skillLocator.primary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarPrimaryReplacement")),GenericSkill.SkillOverridePriority.Contextual);
                 }
                 if ((HeldState.hereticOverridesSecondary.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates ==VeliaerisState.Veliaeris) || (HeldState.hereticOverridesSecondary.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris) || (HeldState.hereticOverridesSecondary.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
                 {
+                    hereticLimit++;
                     skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSecondaryReplacement")), GenericSkill.SkillOverridePriority.Contextual);
                     skillLocator.secondary.SetSkillOverride(skillLocator.secondary,SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSecondaryReplacement")),GenericSkill.SkillOverridePriority.Contextual);
                 }
                 if ((HeldState.hereticOverridesUtility.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris) || (HeldState.hereticOverridesUtility.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris) || (HeldState.hereticOverridesUtility.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
                 {
+                    hereticLimit++;
                     skillLocator.utility.UnsetSkillOverride(skillLocator.utility, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarUtilityReplacement")), GenericSkill.SkillOverridePriority.Contextual);
                     skillLocator.utility.SetSkillOverride(skillLocator.utility,SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarUtilityReplacement")),GenericSkill.SkillOverridePriority.Contextual);
                 }
                 if ((HeldState.hereticOverridesSpecial.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris) || (HeldState.hereticOverridesSpecial.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris) || (HeldState.hereticOverridesSpecial.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
                 {
+                    hereticLimit++;
                     skillLocator.special.UnsetSkillOverride(skillLocator.special, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSpecialReplacement")), GenericSkill.SkillOverridePriority.Contextual);
                     skillLocator.special.SetSkillOverride(skillLocator.special, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSpecialReplacement")), GenericSkill.SkillOverridePriority.Contextual);
                 }
             }
+//            System.Console.WriteLine("Output");
         }
     }
 }

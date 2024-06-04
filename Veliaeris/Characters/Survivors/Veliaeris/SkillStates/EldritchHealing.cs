@@ -17,15 +17,18 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
         {
 
             CharacterBody body;
-            body = this.GetComponent<CharacterBody>();
-            float Erishealth = body.healthComponent.health;
+            body = GetComponent<CharacterBody>();
+            float Erishealth = body.healthComponent.fullHealth;
             this.characterBody.healthComponent.Heal(Erishealth*0.5f,default(ProcChainMask));
             TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
+            Util.CleanseBody(base.characterBody,true,false,false,true,true,false);
+            
             for (int i = 0; i < array.Length; i++)
             {
                 if (array[i].teamIndex == this.teamComponent.teamIndex)
                 {
-                    array[i].GetComponent<CharacterBody>().healthComponent.Heal(Erishealth * 0.75f, default(ProcChainMask));
+                    array[i].GetComponent<CharacterBody>().healthComponent.Heal(Erishealth * 0.5f, default(ProcChainMask));
+                    Util.CleanseBody(array[i].GetComponent<CharacterBody>(),true,false,false,true,true,false);
                 }
             }
             base.OnEnter();

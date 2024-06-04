@@ -4,6 +4,7 @@ using RoR2;
 using System.Collections.Generic;
 using UnityEngine;
 using VeliaerisMod.Modules;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 
 namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 {
@@ -20,7 +21,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             hitboxGroupName = "SwordGroup";
             
 
-            damageCoefficient = HenryStaticValues.swordDamageCoefficient;
+            damageCoefficient = VeliaerisStaticValues.scytheDamageCoefficient;
             procCoefficient = 1f;
             pushForce = 300f;
             bonusForce = Vector3.zero;
@@ -42,10 +43,9 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             hitSoundString = "";
             muzzleString = swingIndex % 2 == 0 ? "SwingLeft" : "SwingRight";
             playbackRateParam = "Slash.playbackRate";
-            swingEffectPrefab = HenryAssets.swordSwingEffect;
-            hitEffectPrefab = HenryAssets.swordHitImpactEffect;
-
-            impactSound = HenryAssets.swordHitSoundEvent.index;
+            swingEffectPrefab = VeliaerisAssets.swordSwingEffect;
+            hitEffectPrefab = VeliaerisAssets.swordHitImpactEffect;
+            impactSound = VeliaerisAssets.swordHitSoundEvent.index;
             base.OnEnter();
             attack.damageType = damageType;
             attack.AddModdedDamageType(DamageTypes.AbyssCorrosion);

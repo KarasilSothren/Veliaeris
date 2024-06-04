@@ -1,14 +1,15 @@
-﻿using System;
+﻿using RoR2;
+using RoR2.Orbs;
+using System;
 using UnityEngine;
 using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 
-namespace RoR2.Orbs
+namespace VeliaerisMod.Modules
 {
     public class VoidDetonatorOrb : Orb
     {
         public override void Begin()
         {
-            System.Console.WriteLine("Being void det");
             base.duration = base.distanceToTarget / this.travelSpeed;
             EffectData effectData = new EffectData
             {
@@ -63,7 +64,6 @@ namespace RoR2.Orbs
             GlobalEventManager.instance.OnHitAll(damageInfo, healthComponent.gameObject);
             if (healthComponent.combinedHealthFraction < voidExecution)
             {
-                System.Console.WriteLine("executed");
                 if (healthComponent.health > 0f)
                 {
                     healthComponent.Networkhealth = 0f;

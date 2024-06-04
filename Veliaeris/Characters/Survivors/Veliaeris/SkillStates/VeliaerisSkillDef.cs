@@ -22,7 +22,6 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris
         // Token: 0x060045B2 RID: 17842 RVA: 0x00121AA1 File Offset: 0x0011FCA1
         private static bool HasTarget([NotNull] GenericSkill skillSlot)
         {
-            System.Console.WriteLine("hastarget?");
             HuntressTracker huntressTracker = ((VeliaerisTrackingSkillDef.InstanceData)skillSlot.skillInstanceData).huntressTracker;
             return (huntressTracker != null) ? huntressTracker.GetTrackingTarget() : null;
         }
@@ -36,7 +35,6 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris
         // Token: 0x060045B4 RID: 17844 RVA: 0x00121ADC File Offset: 0x0011FCDC
         public override bool IsReady([NotNull] GenericSkill skillSlot)
         {
-            System.Console.WriteLine(HasTarget(skillSlot));
             return base.IsReady(skillSlot) && HasTarget(skillSlot);
         }
 

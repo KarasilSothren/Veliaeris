@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 using VeliaerisMod.Survivors.Veliaeris;
+using VeliaerisMod.Modules;
 
 namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 {
@@ -29,7 +30,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 bullseyeSearch.maxDistanceFilter = float.PositiveInfinity;
                 bullseyeSearch.minDistanceFilter = 0f;
                 bullseyeSearch.minAngleFilter = 0f;
-                bullseyeSearch.maxAngleFilter = 180f;
+                bullseyeSearch.maxAngleFilter = 360f;
                 bullseyeSearch.sortMode = BullseyeSearch.SortMode.Distance;
                 bullseyeSearch.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
                 bullseyeSearch.searchOrigin = base.characterBody.corePosition;
@@ -64,10 +65,10 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         public static float baseDuration;
 
         // Token: 0x0400146F RID: 5231
-        public static float baseDamageCoefficient =20f;
+        public static float baseDamageCoefficient =4f;
 
         // Token: 0x04001470 RID: 5232
-        public static float damageCoefficientPerStack = 5f;
+        public static float damageCoefficientPerStack = 2.5f;
 
         // Token: 0x04001471 RID: 5233
         public static float procCoefficient;
@@ -147,7 +148,6 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     this.timer = this.interval;
                     while (this.i < this.detonationTargets.Length)
                     {
-                        System.Console.WriteLine("Before voiddent");
                         try
                         {
                             HurtBox targetHurtBox = null;

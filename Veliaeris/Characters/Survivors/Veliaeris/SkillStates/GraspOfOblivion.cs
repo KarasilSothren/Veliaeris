@@ -1,20 +1,15 @@
 ﻿using EntityStates;
 using VeliaerisMod.Survivors.Veliaeris;
 using RoR2;
-using RoR2.Skills;
-using System.Linq;
 using UnityEngine;
-using VeliaerisMod;
-using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
-using IL.RoR2.Orbs;
-using On.RoR2.Orbs;
 using R2API;
-using VeliaerisMod.Modules;
 using UnityEngine.Networking;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using VeliaerisMod.Modules;
 
 namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 {
-    public class Corrupt : BaseState
+    public class GraspOfOblivion : BaseSkillState
     {
         public static float procCoefficient = 1f;
         public float baseDuration = 0.6f;
@@ -38,21 +33,21 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             if (modelTransfrom)
             {
                 this.childLocator = modelTransfrom.GetComponent<ChildLocator>();
-                this.animator = modelTransfrom.GetComponent <Animator>();
-                
+                this.animator = modelTransfrom.GetComponent<Animator>();
+
             }
-            if(this.hunterTracker&&base.isAuthority)
+            if (this.hunterTracker && base.isAuthority)
             {
                 this.initialOrbTarget = this.hunterTracker.GetTrackingTarget();
             }
             this.duration = this.baseDuration / this.attackSpeedStat;
             if (base.characterBody)
             {
-                base.characterBody.SetAimTimer(this.duration+1f);
+                base.characterBody.SetAimTimer(this.duration + 1f);
             }
             this.isCrit = Util.CheckRoll(base.characterBody.crit, base.characterBody.master);
             //System.Console.WriteLine("looking:",hunterTracker.ToString());
-            
+
         }
 
         public override void OnExit()
@@ -61,10 +56,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             this.FireOrbArrow();
         }
 
-        protected virtual RoR2.Orbs.GenericDamageOrb CreateVoidOrb()
-        {
-            return new RoR2.Orbs.GenericDamageOrb();
-        }
+        
 
         private Vector3? originalMuzzlePosition = null;
         private Transform _muzzleTransform;
@@ -118,24 +110,24 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             //    return;
             //}
             //this.firedArrowCount++;
-            RoR2.Orbs.GenericDamageOrb genericDamageOrb = this.CreateVoidOrb();
-
-            genericDamageOrb.AddModdedDamageType(DamageTypes.AbyssCorrosion);
-            genericDamageOrb.damageValue = 0f;
+            HurtBox hurtBox = this.initialOrbTarget;
+            GraspDamageOrb genericDamageOrb = new GraspDamageOrb();
+            float hpDamage = this.characterBody.maxHealth*0.5f;
+            
+            float percentMaxHealthDamage = hurtBox.healthComponent.combinedHealth * 0.02f;
+            genericDamageOrb.damageValue = (hpDamage+percentMaxHealthDamage);
             genericDamageOrb.isCrit = this.isCrit;
             genericDamageOrb.teamIndex = TeamComponent.GetObjectTeam(base.gameObject);
             genericDamageOrb.attacker = base.gameObject;
             genericDamageOrb.procCoefficient = this.orbProcCoefficent;
-            HurtBox hurtBox = this.initialOrbTarget;
-            int currentVoidStacks = initialOrbTarget.healthComponent.body.GetBuffCount(VeliaerisBuffs.abyss)+1;
-            float baseHealing = this.characterBody.maxHealth * 0.3f;
-            this.healthComponent.Heal(currentVoidStacks * baseHealing,default(ProcChainMask));
+            genericDamageOrb.damageColorIndex = DamageColorIndex.Void;
+
             if (hurtBox)
             {
                 Transform transform = this.childLocator.FindChild(this.muzzleString);
-//                System.Console.WriteLine(transform.position);
+                //                System.Console.WriteLine(transform.position);
                 genericDamageOrb.origin = GetOrbOrigin;
-  //              System.Console.WriteLine(genericDamageOrb.origin);
+                //              System.Console.WriteLine(genericDamageOrb.origin);
                 genericDamageOrb.target = hurtBox;
                 RoR2.Orbs.OrbManager.instance.AddOrb(genericDamageOrb);
             }
@@ -154,7 +146,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         }
 
 
-        
+
 
         public override InterruptPriority GetMinimumInterruptPriority()
         {

@@ -7,11 +7,11 @@ using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 
 namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
 {
-    public class blessingsFromBeyond :BaseSkillState
+    public class BlessingsFromBeyond :BaseSkillState
     {
 
 
-        public float duration = 20f;
+        public float duration = 10f;
         public override void OnEnter()
         {
 

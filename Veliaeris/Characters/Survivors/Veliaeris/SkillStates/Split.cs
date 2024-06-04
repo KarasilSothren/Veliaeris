@@ -17,34 +17,26 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         private float duration =0.2f;
         public override void OnEnter()
         {
+            CharacterBody body;
+            body = GetComponent<CharacterBody>();
+            body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
             base.OnEnter();
-            System.Console.WriteLine("Current state: "+VeliaerisPlugin.VeliaerisStates);
-            System.Console.WriteLine("first change?: "+VeliaerisPlugin.firstChange);
-            System.Console.WriteLine("splitstate on active: "+VeliaerisPlugin.previousSplitSate);
             if (base.isAuthority && VeliaerisPlugin.firstChange)
             {
                 VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
                 VeliaerisPlugin.previousSplitSate = VeliaerisState.Eris;
                 HeldState.velState = VeliaerisState.Eris;
                 VeliaerisPlugin.firstChange = false;
-                System.Console.WriteLine("first change check: " + VeliaerisPlugin.firstChange);
-                System.Console.WriteLine("veliaeris state check after first change: " + VeliaerisPlugin.VeliaerisStates);
             }
             else
             {
                 VeliaerisPlugin.VeliaerisStates = VeliaerisPlugin.previousSplitSate;
                 HeldState.velState = VeliaerisPlugin.previousSplitSate;
             }
-            System.Console.WriteLine("Exit state: " + VeliaerisPlugin.VeliaerisStates);
-            System.Console.WriteLine("exit held state: " + HeldState.velState);
-            if (VeliaerisSurvivor.instance.assetBundle != null)
-            {
-                System.Console.WriteLine("assetbundle is not null");
-            }
    
 
 
-            VeliaerisMod.Survivors.Veliaeris.SkillStates.MergeandShift.SkillSwitch(base.skillLocator);
+            VeliaerisMod.Survivors.Veliaeris.SkillStates.MergeandShift.SkillSwitch(base.skillLocator,false);
             //if (VeliaerisPlugin.VeliaerisStates != VeliaerisStates.Veliaeris)
             //{
             //    if (VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Velia)

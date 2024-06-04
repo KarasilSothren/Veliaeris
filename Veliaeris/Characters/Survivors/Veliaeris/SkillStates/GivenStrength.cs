@@ -15,7 +15,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
     public class GivenStrength :BaseSkillState
     {
         private HurtBox[] targetTargets;
-        public float duration = 10f;
+        public float duration = 8f;
         public override void OnEnter()
         {
 
@@ -38,7 +38,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
                 targetSearch.maxDistanceFilter = 30f;
                 targetSearch.minDistanceFilter = 0f;
                 targetSearch.minAngleFilter = 0f;
-                targetSearch.maxAngleFilter = 180f;
+                targetSearch.maxAngleFilter = 360f;
                 targetSearch.sortMode = BullseyeSearch.SortMode.Distance;
                 targetSearch.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
                 targetSearch.searchOrigin = base.characterBody.corePosition;
@@ -52,7 +52,8 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
             {
                 for(int i = 0; i < this.targetTargets.Length; i++)
                 {
-                    targetTargets[i].healthComponent.body.AddTimedBuff(RoR2Content.Buffs.Cripple, 10f);
+                    targetTargets[i].healthComponent.body.AddTimedBuff(RoR2Content.Buffs.Cripple, 8f);
+//                    targetTargets[i].healthComponent.body.AddBuff(RoR2Content.Buffs.PermanentCurse);
                 }
 
 
