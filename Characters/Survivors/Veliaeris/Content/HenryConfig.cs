@@ -1,9 +1,9 @@
 ﻿using BepInEx.Configuration;
 using VeliaerisMod.Modules;
 
-namespace VeliaerisMod.Survivors.Henry
+namespace VeliaerisMod.Survivors.Veliaeris
 {
-    public static class HenryConfig
+    public static class VeliaerisConfig
     {
         public static ConfigEntry<bool> someConfigBool;
         public static ConfigEntry<float> someConfigFloat;
