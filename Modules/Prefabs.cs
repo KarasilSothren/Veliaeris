@@ -8,6 +8,7 @@ using static RoR2.CharacterAI.AISkillDriver;
 using RoR2.Skills;
 using System;
 using System.Linq;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 
 namespace VeliaerisMod.Modules
 {
@@ -323,7 +324,7 @@ namespace VeliaerisMod.Modules
             SetupHurtboxGroup(bodyPrefab, characterModel.gameObject);
             SetupAimAnimator(bodyPrefab, characterModel.gameObject);
             SetupFootstepController(characterModel.gameObject);
-            SetupRagdoll(characterModel.gameObject);
+           // SetupRagdoll(characterModel.gameObject);
 
             return characterModel;
         }
@@ -497,7 +498,7 @@ namespace VeliaerisMod.Modules
 
             if (!ragdollController) return;
 
-            if (ragdollMaterial == null) ragdollMaterial = RoR2.LegacyResourcesAPI.Load<GameObject>("Prefabs/CharacterBodies/CommandoBody").GetComponentInChildren<RagdollController>().bones[1].GetComponent<Collider>().material;
+            if (ragdollMaterial == null) ragdollMaterial = RoR2.LegacyResourcesAPI.Load<GameObject>("Prefabs/CharacterBodies/HuntressBody").GetComponentInChildren<RagdollController>().bones[1].GetComponent<Collider>().material;
 
             foreach (Transform boneTransform in ragdollController.bones)
             {
@@ -553,6 +554,7 @@ namespace VeliaerisMod.Modules
             CharacterMaster characterMaster = masterObject.GetComponent<CharacterMaster>();
             characterMaster.bodyPrefab = bodyPrefab;
 
+
             AISkillDriver[] drivers = masterObject.GetComponents<AISkillDriver>();
             for (int i = 0; i < drivers.Length; i++)
             {
@@ -565,7 +567,9 @@ namespace VeliaerisMod.Modules
         public static GameObject LoadMaster(this AssetBundle assetBundle, GameObject bodyPrefab, string assetName)
         {
             GameObject newMaster = assetBundle.LoadAsset<GameObject>(assetName);
-
+            newMaster.AddComponent<HeldState>();
+            newMaster.AddComponent<VeliaerisPassive>();
+//            newMaster.AddComponent<SpeechDriver>();
             BaseAI baseAI = newMaster.GetComponent<BaseAI>();
             if(baseAI == null)
             {

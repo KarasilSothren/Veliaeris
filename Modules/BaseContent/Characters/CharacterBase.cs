@@ -87,9 +87,9 @@ namespace VeliaerisMod.Modules.Characters
         public string subtitleNameToken = "";
 
         /// <summary> body prefab you're cloning for your character- commando is the safest </summary>
-        public string bodyNameToClone = "Commando";
+        public string bodyNameToClone = "huntress";
 
-        public Color bodyColor = Color.white;
+        public Color bodyColor = Color.magenta;
 
         public Texture characterPortrait = null;
 
@@ -149,7 +149,7 @@ namespace VeliaerisMod.Modules.Characters
         public float cameraParamsVerticalOffset = 1.37f;
 
         /// <summary> large characters like loader are -12. for smaller characters like commando go for -10 maybe -9 </summary>
-        public float cameraParamsDepth = -10;
+        public float cameraParamsDepth = -8;
 
         private CharacterCameraParams _cameraParams;
         public CharacterCameraParams cameraParams
