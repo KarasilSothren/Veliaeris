@@ -20,8 +20,8 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         {
             base.OnEnter();
             this.duration = VoidDetonator.baseDuration / this.attackSpeedStat;
-//            EffectManager.SimpleImpactEffect(VoidDetonator.enterEffectPrefab, base.characterBody.corePosition, Vector3.up, false);
-  //          Util.PlaySound(VoidDetonator.enterSoundString, base.gameObject);
+            //            EffectManager.SimpleImpactEffect(VoidDetonator.enterEffectPrefab, base.characterBody.corePosition, Vector3.up, false);
+            //          Util.PlaySound(VoidDetonator.enterSoundString, base.gameObject);
             if (NetworkServer.active)
             {
                 BullseyeSearch bullseyeSearch = new BullseyeSearch();
@@ -192,6 +192,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 {
                     return false;
                 }
+                System.Console.WriteLine("detenator hurtbox: " + targetHurtBox);
                 VoidDetonatorOrb VoidDetonatorOrb = new VoidDetonatorOrb();
                 VoidDetonatorOrb.origin = this.characterBody.corePosition;
                 VoidDetonatorOrb.target = targetHurtBox;

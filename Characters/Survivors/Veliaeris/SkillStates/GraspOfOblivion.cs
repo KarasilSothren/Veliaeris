@@ -1,81 +1,194 @@
-using RoR2.Orbs;
+﻿using EntityStates;
+using VeliaerisMod.Survivors.Veliaeris;
 using RoR2;
+using UnityEngine;
+using R2API;
+using UnityEngine.Networking;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using VeliaerisMod.Modules;
+using RoR2.Orbs;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 
-namespace VeliaerisMod.Modules
+namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 {
-    public class GraspOfOblivionOrb : Orb
+    public class GraspOfOblivion : BaseSkillState
     {
-        public override void Begin()
+        public static float procCoefficient = 1f;
+        public float duration = 0.6f;
+        //delay on firing is usually ass-feeling. only set this if you know what you're doing
+        private HuntressTracker hunterTracker;
+        private ChildLocator childLocator;
+        private HurtBox initialOrbTarget;
+        public float orbProcCoefficent;
+        private string muzzleString;
+        private Animator animator;
+        protected bool isCrit;
+        private int firedArrowCount;
+        private int maxArrowCount;
+        public static GameObject graspEffectPrefab;
+        public static GameObject orbEffectPrefab;
+        public override void OnEnter()
         {
-            base.duration = 0f;
-            EffectData effectData = new EffectData
+            base.OnEnter();
+            Transform modelTransfrom = base.GetModelTransform();
+            this.hunterTracker = base.GetComponent<HuntressTracker>();
+            BullseyeSearch bullseyeSearch = new BullseyeSearch();
+            if (modelTransfrom)
             {
-                scale = 1f,
-                origin = this.origin,
-                genericFloat = base.duration
-            };
-            effectData.SetHurtBoxReference(this.target);
-            if (this.orbEffectPrefab)
+                this.childLocator = modelTransfrom.GetComponent<ChildLocator>();
+                this.animator = modelTransfrom.GetComponent<Animator>();
+
+            }
+            if (this.hunterTracker && base.isAuthority)
             {
-                EffectManager.SpawnEffect(this.orbEffectPrefab, effectData, true);
+                this.initialOrbTarget = this.hunterTracker.GetTrackingTarget();
+            }
+            if (base.characterBody)
+            {
+                base.characterBody.SetAimTimer(this.duration + 1f);
+            }
+            this.isCrit = Util.CheckRoll(base.characterBody.crit, base.characterBody.master);
+
+            //System.Console.WriteLine("looking:",hunterTracker.ToString());
+
+        }
+
+
+
+        public override void OnExit()
+        {
+            base.OnExit();
+            this.FireOrbArrow();
+        }
+
+        protected virtual RoR2.Orbs.GenericDamageOrb CreateVoidOrb()
+        {
+            return new RoR2.Orbs.GenericDamageOrb();
+        }
+
+        private Vector3? originalMuzzlePosition = null;
+        private Transform _muzzleTransform;
+
+        private Vector3? originalMuzzleDirection = null;
+
+        private Vector3 muzzleDirection
+        {
+            get
+            {
+                if (originalMuzzleDirection == null)
+                {
+                    originalMuzzleDirection = _muzzleTransform.right + _muzzleTransform.up - _muzzleTransform.forward;
+                }
+                return originalMuzzleDirection.Value;
             }
         }
 
-        public override void OnArrival()
+        private Vector3 muzzlePosition
         {
-            System.Console.WriteLine("arrived in grasporb");
-            System.Console.WriteLine("base target data:"+target);
-            base.OnArrival();
-            if (!this.target)
+            get
             {
-                return;
+                if (originalMuzzlePosition == null)
+                {
+                    originalMuzzlePosition = _muzzleTransform.position;
+                }
+                return originalMuzzlePosition.Value;
             }
-            HealthComponent healthComponent = this.target.healthComponent;
-            System.Console.WriteLine("healthcomponent target data:" + target.healthComponent);
-            if (!healthComponent){
-                return;
-            }
-            CharacterBody body = healthComponent.body;
-            if(!body){
-                return;
-            }
-           
-            Vector3 position = this.target.transform.position;
-            DamageInfo damageInfo = new DamageInfo();
-            damageInfo.damage = this.baseDamage;
-            damageInfo.attacker = this.attacker;
-            damageInfo.inflictor = null;
-            damageInfo.force = Vector3.zero;
-            damageInfo.crit = this.isCrit;
-            damageInfo.procChainMask = this.procChainMask;
-            damageInfo.procCoefficient= this.procCoefficient;
-            damageInfo.position = position;
-            damageInfo.damageColorIndex = this.damageColorIndex;
-            healthComponent.TakeDamage(damageInfo);
-            GlobalEventManager.instance.OnHitEnemy(damageInfo, healthComponent.gameObject);
-            GlobalEventManager.instance.OnHitAll(damageInfo, healthComponent.gameObject);
         }
 
-        public float travelSpeed = 600f;
+        private Vector3 GetOrbOrigin
+        {
+            get
+            {
+                if (_muzzleTransform == null)
+                {
+                    return transform.position;
+                }
+                else
+                {
+                    return muzzlePosition + muzzleDirection;
+                }
+            }
+        }
 
-        public float baseDamage;
+        private void FireOrbArrow()
+        {
+            //if (this.firedArrowCount >= this.maxArrowCount || !NetworkServer.active)
+            //{
+
+            //    return;
+            //}
+            //this.firedArrowCount++;
+//            RoR2.Orbs.GenericDamageOrb genericDamageOrb = this.CreateVoidOrb();
+
+            float hpDamage = this.characterBody.maxHealth * 0.5f;
+            float percentMaxHealthDamage = initialOrbTarget.healthComponent.combinedHealth * 0.02f;
+            System.Console.WriteLine("grasp hurtbox: " + initialOrbTarget);
+
+            GraspOfOblivionOrb graspDamageOrb = new GraspOfOblivionOrb();
+            graspDamageOrb.origin = this.characterBody.corePosition;
+            graspDamageOrb.target = initialOrbTarget;
+            graspDamageOrb.attacker = this.characterBody.gameObject;
+            graspDamageOrb.baseDamage = (hpDamage + percentMaxHealthDamage);
+            graspDamageOrb.damageColorIndex = DamageColorIndex.Void;
+            graspDamageOrb.isCrit = this.isCrit;
+            graspDamageOrb.procChainMask = default(ProcChainMask);
+            graspDamageOrb.procCoefficient = 1f;
+            //                graspDamageOrb.
+            graspDamageOrb.orbEffectPrefab = orbEffectPrefab;
+            OrbManager.instance.AddOrb(graspDamageOrb);
+
+            //genericDamageOrb.AddModdedDamageType(DamageTypes.AbyssCorrosion);
+            //genericDamageOrb.damageValue = 0f;
+            //genericDamageOrb.isCrit = this.isCrit;
+            //genericDamageOrb.teamIndex = TeamComponent.GetObjectTeam(base.gameObject);
+            //genericDamageOrb.attacker = base.gameObject;
+            //genericDamageOrb.procCoefficient = this.orbProcCoefficent;
+            //HurtBox hurtBox = this.initialOrbTarget;
+            //int currentVoidStacks = initialOrbTarget.healthComponent.body.GetBuffCount(VeliaerisBuffs.abyss) + 1;
+            //float baseHealing = this.characterBody.maxHealth * 0.3f;
+            //this.healthComponent.Heal(currentVoidStacks * baseHealing, default(ProcChainMask));
+            //if (hurtBox)
+            //{
+            //    Transform transform = this.childLocator.FindChild(this.muzzleString);
+            //    //                System.Console.WriteLine(transform.position);
+            //    genericDamageOrb.origin = GetOrbOrigin;
+            //    //              System.Console.WriteLine(genericDamageOrb.origin);
+            //    genericDamageOrb.target = hurtBox;
+            //    RoR2.Orbs.OrbManager.instance.AddOrb(genericDamageOrb);
+            //}
+        }
+
+        public override void FixedUpdate()
+        {
+            base.FixedUpdate();
+
+            if (fixedAge >= duration && isAuthority)
+            {
+                outer.SetNextStateToMain();
+                return;
+            }
+        }
 
 
-        public GameObject attacker;
 
-        public bool isCrit;
 
-        public ProcChainMask procChainMask;
+        public override InterruptPriority GetMinimumInterruptPriority()
+        {
+            return InterruptPriority.Skill;
+        }
 
-        public float procCoefficient;
+        public override void OnSerialize(NetworkWriter writer)
+        {
+            writer.Write(HurtBoxReference.FromHurtBox(this.initialOrbTarget));
+        }
 
-        public DamageColorIndex damageColorIndex;
+        // Token: 0x06000E60 RID: 3680 RVA: 0x0003E0A0 File Offset: 0x0003C2A0
+        public override void OnDeserialize(NetworkReader reader)
+        {
+            this.initialOrbTarget = reader.ReadHurtBoxReference().ResolveHurtBox();
+        }
 
-        public GameObject orbEffectPrefab;
+
     }
 }

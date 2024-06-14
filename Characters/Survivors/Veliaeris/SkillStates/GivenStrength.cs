@@ -27,11 +27,12 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
             {
                 if (array[i].teamIndex == this.teamComponent.teamIndex)
                 {
+                    System.Console.WriteLine("given strength team names: " + array[i].name);
                     array[i].GetComponent<CharacterBody>().AddTimedBuff(VeliaerisBuffs.lesserSistersBlessing, duration);
                 }
             }
-            if (NetworkServer.active)
-            {
+//            if (NetworkServer.active)
+  //          {
                 BullseyeSearch targetSearch = new BullseyeSearch();
                 targetSearch.filterByDistinctEntity = true;
                 targetSearch.filterByLoS = false;
@@ -46,10 +47,10 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
                 targetSearch.FilterOutGameObject(base.gameObject);
                 IEnumerable<HurtBox> results = targetSearch.GetResults();
                 this.targetTargets = results.ToArray<HurtBox>();
-            }
+            //}
             System.Console.WriteLine("Before Zone");
-            if(NetworkServer.active)
-            {
+    //        if(NetworkServer.active)
+      //      {
                 System.Console.WriteLine("Entered zone");
                 for(int i = 0; i < this.targetTargets.Length; i++)
                 {
@@ -58,7 +59,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
                 }
 
 
-            }
+        //    }
             base.OnEnter();
         }
 

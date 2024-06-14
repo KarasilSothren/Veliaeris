@@ -7,7 +7,10 @@ using RoR2.Skills;
 using VeliaerisMod.Survivors.Veliaeris;
 using VeliaerisMod.Survivors.Veliaeris.SkillStates;
 using System.Collections.ObjectModel;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using VeliaerisMod.Modules;
 using RoR2.UI;
+using VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates;
 
 namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
 {
@@ -68,7 +71,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
         public static bool stageStarted = false;
         private bool mithrixFlag = false;
         private bool voidlingFlag = false;
-
+        public static bool switchToEris = false;
         public void Update()
         {
             CharacterBody body = this.GetComponent<CharacterBody>();
@@ -79,6 +82,19 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             ////5 minutes is 300f
             ////System.Console.WriteLine("Time until sisters revival:" + timeUntilSistersRevival);
             ////System.Console.WriteLine("Time on Revive timer" + ReviveDisabledTimer);
+
+            if (switchToEris)
+            {
+                switchToEris = false;
+                for (int i = 0; i < array.Length; i++)
+                {
+                    if (array[i].teamIndex == teamComponent.teamIndex)
+                    {
+                        System.Console.WriteLine("switch barrier team names: " + array[i].GetComponent<CharacterBody>().healthComponent);
+                        array[i].GetComponent<CharacterBody>().healthComponent.AddBarrierAuthority(Erishealth * 0.5f);
+                    }
+                }
+            }
 
             if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
             {
@@ -110,7 +126,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
                     if ((array[i].GetComponent<CharacterBody>().healthComponent.health + array[i].GetComponent<CharacterBody>().healthComponent.shield)/array[i].GetComponent<CharacterBody>().healthComponent.fullCombinedHealth <= 0.15f && body.GetBuffCount(VeliaerisBuffs.revokeDeath) > 0)
                     {
                         VeliaerisSurvivor.DeathPreventionStacks--;
-                        body.RemoveBuff(VeliaerisBuffs.revokeDeath);
+                        body.RemoveBuff(VeliaerisBuffs.revokeDeath.buffIndex);
                         array[i].GetComponent<CharacterBody>().healthComponent.Heal((Erishealth * heldHealValue), default(ProcChainMask));
                     }
                     //                    array[i].GetComponent<CharacterBody>().AddTimedBuff(VeliaerisBuffs.lesserSistersBlessing, duration);
@@ -119,6 +135,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             if (timeUntilSistersRevival >= 0)
             {
                 timeUntilSistersRevival -= Time.deltaTime;
+                System.Console.WriteLine("time until:" + timeUntilSistersRevival);
             }
             if(ReviveDisabledTimer >= 0)
             {
@@ -189,6 +206,8 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
     {
         public static void Init()
         {
+//            Modules.Content.AddEntityState(typeof(VeliaerisRespawnSkillDef));
+
             Modules.Content.AddEntityState(typeof(BasicScytheSlash));
 
             Modules.Content.AddEntityState(typeof(Corrupt));
@@ -196,6 +215,24 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             Modules.Content.AddEntityState(typeof(Split));
 
             Modules.Content.AddEntityState(typeof(VoidDetonator));
+
+            Modules.Content.AddEntityState(typeof(MergeandShift));
+
+            Modules.Content.AddEntityState(typeof(GraspOfOblivion));
+
+            Modules.Content.AddEntityState(typeof(GivenStrength));
+
+            Modules.Content.AddEntityState(typeof(EldritchHealing));
+
+            Modules.Content.AddEntityState(typeof(BasicScytheSlashWithReductions));
+
+            Modules.Content.AddEntityState(typeof(CircularSlash));
+
+            Modules.Content.AddEntityState(typeof(BlessingsFromBeyond));
+
+            Modules.Content.AddEntityState(typeof(GraspOfOblivionOrb));
+
+
         }
     }
 }

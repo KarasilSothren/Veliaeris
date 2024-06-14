@@ -59,12 +59,12 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 {
                     for (int i = 0; i < VeliaerisSurvivor.DeathPreventionStacks; i++)
                     {
-                        body.RemoveBuff(VeliaerisBuffs.revokeDeath);
+                        body.RemoveBuff(VeliaerisBuffs.revokeDeath.buffIndex);
                     }
                     if (VeliaerisSurvivor.voidInfluence >= 20)
                     {
-                        if (NetworkServer.active)
-                        {
+                      //  if (NetworkServer.active)
+                        //{
                             BullseyeSearch targetSearch = new BullseyeSearch();
                             targetSearch.filterByDistinctEntity = true;
                             targetSearch.filterByLoS = false;
@@ -94,40 +94,40 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                                 desolation.damageType = DamageType.VoidDeath;
                                 targetHurtBox.healthComponent.TakeDamage(desolation);
                             }
-                        }
+                       // }
                     }
-                    if (NetworkServer.active)
-                    {
-                        BullseyeSearch targetSearch = new BullseyeSearch();
-                        targetSearch.filterByDistinctEntity = true;
-                        targetSearch.filterByLoS = false;
-                        targetSearch.maxDistanceFilter = VeliaDesolationRange + VeliaerisSurvivor.voidInfluence;
-                        targetSearch.minDistanceFilter = 0f;
-                        targetSearch.minAngleFilter = 0f;
-                        targetSearch.maxAngleFilter = 360f;
-                        targetSearch.sortMode = BullseyeSearch.SortMode.Distance;
-                        targetSearch.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
-                        targetSearch.searchOrigin = base.characterBody.corePosition;
-                        targetSearch.RefreshCandidates();
-                        targetSearch.FilterOutGameObject(base.gameObject);
-                        IEnumerable<HurtBox> results = targetSearch.GetResults();
-                        this.targetTargets = results.ToArray<HurtBox>();
-                        DamageInfo desolation = new DamageInfo();
-                        HurtBox targetHurtBox = null;
+//                    if (NetworkServer.active)
+  //                  {
+                        BullseyeSearch targetSearchVoid = new BullseyeSearch();
+                        targetSearchVoid.filterByDistinctEntity = true;
+                        targetSearchVoid.filterByLoS = false;
+                        targetSearchVoid.maxDistanceFilter = VeliaDesolationRange + VeliaerisSurvivor.voidInfluence;
+                        targetSearchVoid.minDistanceFilter = 0f;
+                        targetSearchVoid.minAngleFilter = 0f;
+                        targetSearchVoid.maxAngleFilter = 360f;
+                        targetSearchVoid.sortMode = BullseyeSearch.SortMode.Distance;
+                        targetSearchVoid.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
+                        targetSearchVoid.searchOrigin = base.characterBody.corePosition;
+                        targetSearchVoid.RefreshCandidates();
+                        targetSearchVoid.FilterOutGameObject(base.gameObject);
+                        IEnumerable<HurtBox> resultsvoid = targetSearchVoid.GetResults();
+                        this.targetTargets = resultsvoid.ToArray<HurtBox>();
+                        DamageInfo desolationvoid = new DamageInfo();
+                        HurtBox targetHurtBoxvoid = null;
                         for (int l = 0; l < targetTargets.Length; l++)
                         {
-                            Util.Swap<HurtBox>(ref targetHurtBox, ref this.targetTargets[l]);
-                            desolation.damage = targetHurtBox.healthComponent.combinedHealth*0.25f;
-                            desolation.attacker = this.characterBody.gameObject;
-                            desolation.inflictor = null;
-                            desolation.force = Vector3.up*5000f;
-                            desolation.procCoefficient = 0f;
-                            desolation.position = targetHurtBox.transform.position;
-                            desolation.damageColorIndex = DamageColorIndex.Void;   
-                            desolation.damageType = DamageType.BonusToLowHealth;
-                            targetHurtBox.healthComponent.TakeDamage(desolation);
+                            Util.Swap<HurtBox>(ref targetHurtBoxvoid, ref this.targetTargets[l]);
+                            desolationvoid.damage = targetHurtBoxvoid.healthComponent.combinedHealth*0.25f;
+                            desolationvoid.attacker = this.characterBody.gameObject;
+                            desolationvoid.inflictor = null;
+                            desolationvoid.force = Vector3.forward*500f;
+                            desolationvoid.procCoefficient = 0f;
+                            desolationvoid.position = targetHurtBoxvoid.transform.position;
+                            desolationvoid.damageColorIndex = DamageColorIndex.Void;   
+                            desolationvoid.damageType = DamageType.BonusToLowHealth;
+                            targetHurtBoxvoid.healthComponent.TakeDamage(desolationvoid);
                         }
-                    }
+    //                }
                     System.Console.WriteLine("Void stacks: " + VeliaerisSurvivor.VoidCorruptionStacks);
                     VeliaerisPlugin.VeliaerisStates = VeliaerisState.Velia;
                     //System.Console.WriteLine("Entered Velia State");
@@ -139,17 +139,10 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 {
                     for (int i = 0; i < VeliaerisSurvivor.VoidCorruptionStacks; i++)
                     {
-                        body.RemoveBuff(VeliaerisBuffs.inflictDeath);
+                        body.RemoveBuff(VeliaerisBuffs.inflictDeath.buffIndex);
                     }
-                    TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        if (array[i].teamIndex == this.teamComponent.teamIndex)
-                        {
-                            array[i].GetComponent<CharacterBody>().healthComponent.AddBarrierAuthority(this.characterBody.healthComponent.combinedHealth * 0.5f);
-                        }
-                    }
-                    System.Console.WriteLine("refute stacks: " + VeliaerisSurvivor.DeathPreventionStacks);
+                    ReviveTimer.switchToEris = true;
+//                    System.Console.WriteLine("refute stacks: " + VeliaerisSurvivor.DeathPreventionStacks);
                     VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
                     //System.Console.WriteLine("Entered Eris state");
                     VeliaerisPlugin.previousSplitSate = VeliaerisState.Eris;
@@ -166,8 +159,8 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 VeliaerisPlugin.VeliaerisStates = VeliaerisState.Veliaeris;
                 HeldState.velState = VeliaerisState.Veliaeris;
                 //System.Console.WriteLine("was pressed");
-                if (NetworkServer.active)
-                {
+//                if (NetworkServer.active)
+  //              {
                     BullseyeSearch targetSearch = new BullseyeSearch();
                     targetSearch.filterByDistinctEntity = true;
                     targetSearch.filterByLoS = false;
@@ -182,10 +175,10 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     targetSearch.FilterOutGameObject(base.gameObject);
                     IEnumerable<HurtBox> results = targetSearch.GetResults();
                     this.targetTargets = results.ToArray<HurtBox>();
-                }
+    //            }
 
-                if (NetworkServer.active)
-                {
+      //          if (NetworkServer.active)
+        //        {
                     for (int i = 0; i < this.targetTargets.Length; i++)
                     {
                         for (int j = 0; j < (VeliaerisSurvivor.voidInfluence/10)+1; j++) {
@@ -195,7 +188,8 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     }
 
 
-                }
+          //      }
+          
                 if(body.HasBuff(VeliaerisBuffs.revokeDeath))
                 {
                     for (int i = 0; i < VeliaerisSurvivor.DeathPreventionStacks; i++)
@@ -366,7 +360,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 skillDescriptionToken = prefix + "ERIS_PRIMARY_DESCRIPTION",
                 skillIcon = assets.LoadAsset<Sprite>("texPrimaryIcon"),
                 activationState = new EntityStates.SerializableEntityStateType(typeof(GraspOfOblivion)),
-                activationStateMachineName = "Weapon",
+                activationStateMachineName = "Detonator",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseRechargeInterval = 2f,
@@ -518,34 +512,29 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             });
 
 
-            //            if (onDeath)
-            //            {
-            //                //System.Console.WriteLine("Check form");
-            //                //System.Console.WriteLine("Form: " + VeliaerisPlugin.VeliaerisStates);
-            //                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
-            //                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
-            //                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
-            //                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
-            //                {
-            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
-            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
-            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
-
-            ////                    System.Console.WriteLine("unset velia?");
-            //                }
-            //  //              System.Console.WriteLine("checking");
-            //                if(VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
-            //                {
-            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary,voidSkillDef,GenericSkill.SkillOverridePriority.Contextual);
-            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary,reductionScythe , GenericSkill.SkillOverridePriority.Contextual);
-            //                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
-            //    //                System.Console.WriteLine("unset eris?");
-            //                }
-            //            }
-            //      System.Console.WriteLine("end of ondeathevents");
-                
-                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
+                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
+                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
                 {
+                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
+
+                    //                    System.Console.WriteLine("unset velia?");
+                }
+                //              System.Console.WriteLine("checking");
+                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+                {
+                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, reductionScythe, GenericSkill.SkillOverridePriority.Contextual);
+                    skillLocator.primary.UnsetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
+                    //                System.Console.WriteLine("unset eris?");
+                }
+            
+            VeliaerisPlugin.VeliaerisStates = HeldState.velState;
+            System.Console.WriteLine("Velastate merge:" + VeliaerisPlugin.VeliaerisStates);
+                
                     skillLocator.primary.SetSkillOverride(skillLocator.primary, basicScythe, GenericSkill.SkillOverridePriority.Contextual);
                 if (!onHereticPickup)
                 {
@@ -554,7 +543,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     skillLocator.secondary.SetSkillOverride(skillLocator.secondary, CorruptAndHeal, GenericSkill.SkillOverridePriority.Contextual);
                     skillLocator.special.SetSkillOverride(skillLocator.special, voidDetonation, GenericSkill.SkillOverridePriority.Contextual);
 
-                }
+                
                 if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
                 {
                     //                System.Console.WriteLine("Entered Eris");
@@ -568,6 +557,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 }
                 if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
                 {
+                System.Console.WriteLine("Entered Velia");
                 if (!onHereticPickup)
                 {
                     skillLocator.utility.SetSkillOverride(skillLocator.utility, MergeandShiftSkill, GenericSkill.SkillOverridePriority.Contextual);

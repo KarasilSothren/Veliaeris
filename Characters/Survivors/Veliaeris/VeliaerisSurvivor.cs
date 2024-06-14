@@ -440,7 +440,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 skillNameToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_DESCRIPTION_MENU",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "SWITCH_INFORMATION" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(Split)),
                 activationStateMachineName = "Switch",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
@@ -705,8 +705,8 @@ namespace VeliaerisMod.Survivors.Veliaeris
         private void deathEffect(On.RoR2.CharacterMaster.orig_OnBodyDeath orig, CharacterMaster self, CharacterBody body)
         {
             
-            if (NetworkServer.active)
-            {
+//            if (NetworkServer.active)
+  //          {
 
                 if (body.ToString().Contains("VeliaerisBody"))
                 {
@@ -729,6 +729,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                         ReviveTimer.timeUntilSistersRevival = 20f;
                         ReviveTimer.ReviveDisabledTimer = 300f;
                         SkillLocator switchSkills = revivedbody.GetComponent<SkillLocator>();
+                    System.Console.WriteLine("Vel state check: " + VeliaerisPlugin.VeliaerisStates);
                         if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
                         {
                             VeliaerisPlugin.VeliaerisStates = VeliaerisState.Velia;
@@ -737,6 +738,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                         {
                             VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
                         }
+                    System.Console.WriteLine("Velstate on death revive:" + VeliaerisPlugin.VeliaerisStates);
                         HeldState.velState = VeliaerisPlugin.VeliaerisStates;
                         VeliaerisPlugin.previousSplitSate = HeldState.velState;
                         MergeandShift.SkillSwitch(switchSkills,false);
@@ -751,7 +753,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 }
 
 
-            }        
+//            }        
             orig(self,body);
         }
 
@@ -934,7 +936,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
         {
             StageIdentity = SceneManager.GetActiveScene().name;
             System.Console.WriteLine("Internal Stage Name: " + StageIdentity);
-            
+            System.Console.WriteLine("HasMod?: " + VeliaerisPlugin.CustomStagesInstalled);
             //            System.Console.WriteLine("Check outlog");
             ReviveTimer.stageStarted = false;
             ReviveTimer.startUpTimer = 0f;

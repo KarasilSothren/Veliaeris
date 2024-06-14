@@ -29,6 +29,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
                 System.Console.WriteLine(array[i].name);
                 if (array[i].teamIndex == this.teamComponent.teamIndex)
                 {
+                    System.Console.WriteLine("healing team names: " + array[i].name);
                     array[i].GetComponent<CharacterBody>().healthComponent.Heal(Erishealth * 0.5f, default(ProcChainMask));
                     Util.CleanseBody(array[i].GetComponent<CharacterBody>(),true,false,false,true,true,false);
                 }
