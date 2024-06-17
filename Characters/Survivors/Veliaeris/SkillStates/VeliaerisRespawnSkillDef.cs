@@ -17,11 +17,11 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
         
         public override bool CanExecute([NotNull] GenericSkill skillSlot)
         {
-            return base.CanExecute(skillSlot) && ReviveTimer.timeUntilSistersRevival<=0;
+            return base.CanExecute(skillSlot) && !skillSlot.characterBody.HasBuff(VeliaerisBuffs.missingSibling);
         }
         public override bool IsReady([NotNull] GenericSkill skillSlot)
         {
-            return base.IsReady(skillSlot) && ReviveTimer.timeUntilSistersRevival <= 0;
+            return base.IsReady(skillSlot) && !skillSlot.characterBody.HasBuff(VeliaerisBuffs.missingSibling);
         }
     }
 

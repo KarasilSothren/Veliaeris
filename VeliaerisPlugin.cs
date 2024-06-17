@@ -1,8 +1,13 @@
 ﻿using BepInEx;
 using R2API.Utils;
+using RoR2.ContentManagement;
+using RoR2.ExpansionManagement;
 using System.Security;
 using System.Security.Permissions;
-using VeliaerisMod.Survivors.Henry;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
+using VeliaerisMod.Survivors.Veliaeris;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -21,16 +26,36 @@ namespace VeliaerisMod
         public const string MODUID = "com.karasil.VeliaerisMod";
         public const string MODNAME = "VeliaerisMod";
         public const string MODVERSION = "1.0.0";
+        private const string ver = "1.1";
 
         // a prefix for name tokens to prevent conflicts- please capitalize all name tokens for convention
         public const string DEVELOPER_PREFIX = "KARASIL";
 
         public static VeliaerisPlugin instance;
+        public static VeliaerisState previousSplitSate = VeliaerisState.Eris;
+        public static VeliaerisState VeliaerisStates;
+        public VeliaerisPassive passiveSkillSlot;
+        public static bool hasVoid = true;
+        public static bool CustomStagesInstalled => IsModInstalled("com.Nuxlar.CoolerStages");
 
+        public static bool IsModInstalled(string GUID)
+        {
+            return BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(GUID);
+        }
         void Awake()
         {
+            try
+            {
+                GameObject explosionPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/VoidRaidCrab/VoidRaidCrabSpawnEffect.prefab").WaitForCompletion();
+            }
+            catch
+            {
+                hasVoid = false;
+            }
+            System.Console.WriteLine("Check for void: " + hasVoid);
+            Debug.Log("Current variant Version" + ver);
             instance = this;
-
+//            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };
             //easy to use logger
             Log.Init(Logger);
 

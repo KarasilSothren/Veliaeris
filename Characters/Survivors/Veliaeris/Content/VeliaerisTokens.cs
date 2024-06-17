@@ -42,7 +42,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
             String voidPassive="";
             if (VeliaerisPlugin.hasVoid)
             {
-                voidPassive = "\nCollecting Void infused items will increase the Persona's capabilities";
+                voidPassive = "\nCollecting Void infused items will increase the Persona's capabilities and even enhance effects.";
             }
             #region Passive
             Language.Add(prefix + "PASSIVE_NAME", "Sister of The One Who Usurped The Void");
@@ -93,7 +93,8 @@ namespace VeliaerisMod.Survivors.Veliaeris
             Language.Add(prefix + "ABYSS_INFORMATION", "<style=cKeywordName>Abyss</style>Deals 1 damage per stack for 10 seconds. Each added stack resets the duration.");
             Language.Add(prefix + "PERCENT_HEALTH_DAMAGE", $"<style=cKeywordName>Percent Health Damage</style>Deals damage based on the enemies health rather than a damage multiplier. For Regular enemies it is {100f*0.25f}% of their max health. For bosses it is {100f*0.05f}% of their max health.");
             Language.Add(prefix + "SKILL_INFORMATION", "<style=cKeywordName>Stagnat Skills</style>All Skills are Persona specfic the selection of skills is display only and will not affect what skills the survivor will use in what form. Their purpose is to give a view into what each form can do.");
-            Language.Add(prefix + "SWITCH_INFORMATION", "Spliting to Eris will cause allies to gain a Blessing of Health while Eris gains a stack of Death Prevention");
+            Language.Add(prefix + "SWITCH_INFORMATION", "<style=cKeywordName>Veliaeris Split Effects</style>Spliting to Eris will cause allies to gain a Blessing of Health while Eris gains a stack of Death Prevention.\nSplitting to Velia will cause allies to gain a Blessing of Damage while Velia gains a stack of Void Corruption.\n<style=cKeywordName>Split Buffs</style>Blessing of Health:\n<style=cIsHealing>Gives allies bonus health equal to 5% of their own max health</style> per stack of the blessing.\nBlessing of Damage:\n<style=cIsDamage>Gives allies 1% bonus damage</style> per stack of the blessing.\nDeath Protection:\nEach stack acts a healing potion for all allies which heals when an ally reaches 15% of their max health, they <style=cIsHealing>heal for 70% of your max health</style>.\nVoid Corruption:\nEach stack <style=cIsDamage>80% damage</style> increasing by 1 per every 2 stacks you have.");
+            Language.Add(prefix + "MERGE_INFORMATION", "<style=cKeywordName>Merge and Switch Effects</style>Switching to Eris from Velia will give all allies a shield equal to <style=cIsHealing>50% of your current health.</style>\nSwitching to Velia from Eris will cause enemies to be thrown away and dealt damage equal to <style=cIsDamage>25% of their max hp</style>.\nMerging back together will cause nearby enemies to be inflicted with a permanent curse.");
             #endregion
 
             //#region Achievements

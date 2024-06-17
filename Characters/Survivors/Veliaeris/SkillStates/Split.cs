@@ -33,6 +33,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 VeliaerisPlugin.VeliaerisStates = VeliaerisPlugin.previousSplitSate;
                 HeldState.velState = VeliaerisPlugin.previousSplitSate;
             }
+            HeldState.paststate = VeliaerisState.Veliaeris;
             if(VeliaerisPlugin.VeliaerisStates==VeliaerisState.Eris)
             {
                 TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();

@@ -29,6 +29,8 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
         public static int gatheredSpecial = 0;
         public static bool destroyVeliaerisCorpse = false;
         public static bool firstChange = true;
+        public static VeliaerisState paststate = VeliaerisState.Veliaeris;
+        public static VeliaerisState initalState;
     }
     public class VeliaerisPassive: MonoBehaviour {
         public GenericSkill passiveSkillSlot;
@@ -43,17 +45,21 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             {
                 if(this.passiveSkillSlot.skillDef==this.VeliaerisStart)
                 {
+                    System.Console.WriteLine("VeliaerisReturn");
                     return VeliaerisState.Veliaeris;
                 }
                 if (this.passiveSkillSlot.skillDef == this.ErisStart)
                 {
+                    System.Console.WriteLine("ErisReturn");
                     return VeliaerisState.Eris;
                 }
                 if (this.passiveSkillSlot.skillDef == this.VeliaStart)
                 {
+                    System.Console.WriteLine("VeliaReturn");
                     return VeliaerisState.Velia;
                 }
             }
+            System.Console.WriteLine("Returned default");
             return VeliaerisState.Veliaeris;
         }
 
@@ -83,39 +89,21 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             ////System.Console.WriteLine("Time until sisters revival:" + timeUntilSistersRevival);
             ////System.Console.WriteLine("Time on Revive timer" + ReviveDisabledTimer);
 
-            if (switchToEris)
-            {
-                switchToEris = false;
-                for (int i = 0; i < array.Length; i++)
-                {
-                    if (array[i].teamIndex == teamComponent.teamIndex)
-                    {
-                        System.Console.WriteLine("switch barrier team names: " + array[i].GetComponent<CharacterBody>().healthComponent);
-                        array[i].GetComponent<CharacterBody>().healthComponent.AddBarrierAuthority(Erishealth * 0.5f);
-                    }
-                }
-            }
+            
 
             if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
             {
-                if (body.GetBuffCount(VeliaerisBuffs.revokeDeath)<VeliaerisSurvivor.DeathPreventionStacks) {
-                    for (int i = 0; i < VeliaerisSurvivor.DeathPreventionStacks; i++)
-                    {
-                        body.AddBuff(VeliaerisBuffs.revokeDeath);
-                    }
-                }
+                body.SetBuffCount(VeliaerisBuffs.inflictDeath.buffIndex, 0);
+                body.SetBuffCount(VeliaerisBuffs.revokeDeath.buffIndex, VeliaerisSurvivor.DeathPreventionStacks);
             }
             if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
             {
-                if (body.GetBuffCount(VeliaerisBuffs.inflictDeath)<VeliaerisSurvivor.VoidCorruptionStacks) { 
-                for (int i = 0; i < VeliaerisSurvivor.VoidCorruptionStacks; i++)
-                {
-                    body.AddBuff(VeliaerisBuffs.inflictDeath);
-                }
-            }
+                body.SetBuffCount(VeliaerisBuffs.revokeDeath.buffIndex, 0);
+                body.SetBuffCount(VeliaerisBuffs.inflictDeath.buffIndex, VeliaerisSurvivor.VoidCorruptionStacks);
+            
             }
             float heldHealValue = 0.7f;
-            if (VeliaerisSurvivor.voidInfluence>=10)
+            if (VeliaerisSurvivor.voidInfluence>=20)
             {
                 heldHealValue = 2.7f;
             }

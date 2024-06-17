@@ -23,6 +23,35 @@ namespace VeliaerisMod.Survivors.Veliaeris
 {
     public class VeliaerisSurvivor : SurvivorBase<VeliaerisSurvivor>
     {
+
+
+
+
+
+
+
+
+        #region skillDefines
+        #region utility
+        public static VeliaerisRespawnSkillDef MergeandShiftSkill;
+        public static SkillDef split;
+        #endregion utility
+        #region primary
+        public static SkillDef basicScythe;
+        public static SkillDef reductionScythe;
+        public static HuntressTrackingSkillDef voidSkillDef;
+        #endregion primary
+        #region secondary
+        public static SkillDef allyBuff;
+        public static SkillDef circularSlash;
+        public static HuntressTrackingSkillDef CorruptAndHeal;
+        #endregion secondary
+        #region special
+        public static SkillDef voidDetonation;
+        public static SkillDef eldritchHealing;
+        public static SkillDef selfBuffer;
+        #endregion special
+        #endregion skillDefines
         //used to load the assetbundle for this character. must be unique
         public override string assetBundleName => "myassetbundlesr"; //if you do not change this, you are giving permission to deprecate the mod
 
@@ -281,7 +310,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
             //primarySkillDef1.stepGraceDuration = 0.5f;
 
             //Skills.AddPrimarySkills(bodyPrefab, primarySkillDef1);
-            SkillDef basicScythe = Skills.CreateSkillDef(new SkillDefInfo
+            basicScythe = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "BasicScythe",
                 skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_PRIMARY_NAME",
@@ -293,20 +322,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 isCombatSkill = true,
             }
                 );
-            SkillDef voidSkillDef = Skills.CreateSkillDef(new SkillDefInfo
+            reductionScythe = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "grasp",
-                skillNameToken = VELIAERIS_PREFIX + "ERIS_PRIMARY_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_PRIMARY_DESCRIPTION",
-                skillIcon = assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
-                activationState = new EntityStates.SerializableEntityStateType(typeof(GraspOfOblivion)),
-                activationStateMachineName = "Weapon",
-                isCombatSkill = true,
-            });
-            SkillDef reductioncythe = Skills.CreateSkillDef(new SkillDefInfo
-            {
-                skillName="BasicScythe",
+                skillName= "VoidScythe",
                 skillNameToken=VELIAERIS_PREFIX + "VELIA_PRIMARY_NAME",
                 skillDescriptionToken=VELIAERIS_PREFIX + "VELIA_PRIMARY_DESCRIPTION",
                 skillIcon=assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
@@ -316,7 +334,39 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 isCombatSkill=true,
                 });
 
-            Skills.AddPrimarySkills(bodyPrefab, basicScythe,voidSkillDef,reductioncythe);
+            voidSkillDef = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            {
+                skillName = "Grasp",
+                skillNameToken = VELIAERIS_PREFIX + "ERIS_PRIMARY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_PRIMARY_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(GraspOfOblivion)),
+                activationStateMachineName = "Detonator",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                baseRechargeInterval = 2f,
+                baseMaxStock = 1,
+
+                rechargeStock = 1,
+                requiredStock = 1,
+                stockToConsume = 1,
+
+                resetCooldownTimerOnUse = false,
+                fullRestockOnAssign = true,
+                dontAllowPastMaxStocks = false,
+                mustKeyPress = false,
+                beginSkillCooldownOnSkillEnd = false,
+
+                isCombatSkill = true,
+                canceledFromSprinting = false,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
+
+
+            });
+
+
+            Skills.AddPrimarySkills(bodyPrefab, basicScythe,voidSkillDef,reductionScythe);
         }
 
         public void AddSecondarySkills()
@@ -324,20 +374,24 @@ namespace VeliaerisMod.Survivors.Veliaeris
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Secondary);
 
             //here is a basic skill def with all fields accounted for
-            HuntressTrackingSkillDef secondarySkillDef1 = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            
+
+
+
+
+            CorruptAndHeal = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
             {
-                skillName = "HenryGun",
+                skillName = "HealandCorrupt",
                 skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_SECONDARY_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "VELIAERIS_SECONDARY_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Corrupt)),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(Corrupt)),
                 activationStateMachineName = "Weapon2",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                baseRechargeInterval = 1f,
-                /*baseRechargeInterval=15f,*/
+                baseRechargeInterval = 5f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -354,24 +408,27 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 canceledFromSprinting = false,
                 cancelSprintingOnActivation = false,
                 forceSprintDuringState = false,
-                
+
 
             });
 
 
-            HuntressTrackingSkillDef secondarySkillDef2 = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+
+
+
+            allyBuff = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryGun",
+                skillName = "TeamBuff",
                 skillNameToken = VELIAERIS_PREFIX + "ERIS_SECONDARY_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_SECONDARY_DESCRIPTION",
+                keywordTokens = new string[] { VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
-                keywordTokens = new string[] {VELIAERIS_PREFIX + "ABYSS_INFORMATION" },
+
                 activationState = new EntityStates.SerializableEntityStateType(typeof(GivenStrength)),
-                activationStateMachineName = "Weapon2",
+                activationStateMachineName = "Buff",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                baseRechargeInterval = 1f,
-                /*baseRechargeInterval=15f,*/
+                baseRechargeInterval = 15f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -386,26 +443,25 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
                 isCombatSkill = true,
                 canceledFromSprinting = false,
-                cancelSprintingOnActivation = false,
+                cancelSprintingOnActivation = true,
                 forceSprintDuringState = false,
 
 
             });
 
-            HuntressTrackingSkillDef secondarySkillDef3 = Skills.CreateSkillDef<HuntressTrackingSkillDef>(new SkillDefInfo
+            circularSlash = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryGun",
+                skillName = "AoESlash",
                 skillNameToken = VELIAERIS_PREFIX + "VELIA_SECONDARY_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "VELIA_SECONDARY_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE",VELIAERIS_PREFIX+"ABYSS_INFORMATION", VELIAERIS_PREFIX + "PERCENT_HEALTH_DAMAGE" },
-                skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "ABYSS_INFORMATION", VELIAERIS_PREFIX + "PERCENT_HEALTH_DAMAGE" },
+                skillIcon = assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(CircularSlash)),
                 activationStateMachineName = "Weapon2",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                baseRechargeInterval = 1f,
-                /*baseRechargeInterval=15f,*/
+                baseRechargeInterval = 20f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -426,7 +482,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
             });
 
-            Skills.AddSecondarySkills(bodyPrefab, secondarySkillDef1,secondarySkillDef2,secondarySkillDef3);
+            Skills.AddSecondarySkills(bodyPrefab, CorruptAndHeal,allyBuff,circularSlash);
         }
 
         public void AddUtiitySkills()
@@ -434,18 +490,50 @@ namespace VeliaerisMod.Survivors.Veliaeris
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
 
             //here's a skilldef of a typical movement skill.
-            SkillDef split = Skills.CreateSkillDef(new SkillDefInfo
+            
+
+            MergeandShiftSkill = Skills.CreateSkillDef<VeliaerisRespawnSkillDef>(new SkillDefInfo
             {
-                skillName = "split",
+                skillName = "Merge and Shift",
+                skillNameToken = VELIAERIS_PREFIX + "MERGE_UTILITY_NAME",
+                skillDescriptionToken = VELIAERIS_PREFIX + "MERGE_UTILITY_DESCRIPTION",
+                skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
+                keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "MERGE_INFORMATION" },
+                activationState = new EntityStates.SerializableEntityStateType(typeof(MergeandShift)),
+                activationStateMachineName = "Switch",
+                interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
+
+                baseRechargeInterval = 15f,
+                baseMaxStock = 1,
+
+                rechargeStock = 1,
+                requiredStock = 1,
+                stockToConsume = 1,
+
+                resetCooldownTimerOnUse = false,
+                fullRestockOnAssign = false,
+                dontAllowPastMaxStocks = false,
+                mustKeyPress = false,
+                beginSkillCooldownOnSkillEnd = true,
+
+                isCombatSkill = false,
+                canceledFromSprinting = false,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
+            });
+
+            split = Skills.CreateSkillDef(new SkillDefInfo
+            {
+                skillName = "Split",
                 skillNameToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_DESCRIPTION_MENU",
+                skillDescriptionToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_DESCRIPTION_" + VeliaerisPlugin.previousSplitSate,
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
                 keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "SWITCH_INFORMATION" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(Split)),
                 activationStateMachineName = "Switch",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 4f,
+                baseRechargeInterval = 15f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -453,7 +541,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 stockToConsume = 1,
 
                 resetCooldownTimerOnUse = false,
-                fullRestockOnAssign = true,
+                fullRestockOnAssign = false,
                 dontAllowPastMaxStocks = false,
                 mustKeyPress = false,
                 beginSkillCooldownOnSkillEnd = false,
@@ -463,36 +551,8 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 cancelSprintingOnActivation = false,
                 forceSprintDuringState = false,
             });
-            SkillDef merge = Skills.CreateSkillDef(new SkillDefInfo
-            {
-                skillName = "merge",
-                skillNameToken = VELIAERIS_PREFIX + "MERGE_UTILITY_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "MERGE_UTILITY_DESCRIPTION",
-                skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
-                activationState = new EntityStates.SerializableEntityStateType(typeof(MergeandShift)),
-                activationStateMachineName = "Switch",
-                interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 4f,
-                baseMaxStock = 1,
-
-                rechargeStock = 1,
-                requiredStock = 1,
-                stockToConsume = 1,
-
-                resetCooldownTimerOnUse = false,
-                fullRestockOnAssign = true,
-                dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
-                beginSkillCooldownOnSkillEnd = false,
-
-                isCombatSkill = false,
-                canceledFromSprinting = false,
-                cancelSprintingOnActivation = false,
-                forceSprintDuringState = false,
-            });
-            Skills.AddUtilitySkills(bodyPrefab, split,merge);
+            Skills.AddUtilitySkills(bodyPrefab, split, MergeandShiftSkill);
         }
 
         public void AddSpecialSkills()
@@ -500,27 +560,33 @@ namespace VeliaerisMod.Survivors.Veliaeris
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Special);
 
             //a basic skill. some fields are omitted and will just have default values
-            SkillDef specialSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            
+
+
+            voidDetonation = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryBomb",
+                skillName = "VoidDetonator",
                 skillNameToken = VELIAERIS_PREFIX + "VELIAERIS_SPECIAL_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "VELIAERIS_SPECIAL_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.VoidDetonator)),
                 //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Detonator", interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationStateMachineName = "Detonator",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
-
+                baseRechargeInterval = 30f,
+                fullRestockOnAssign = true,
                 isCombatSkill = true,
                 mustKeyPress = false,
+                cancelSprintingOnActivation = false,
             });
 
-            SkillDef specialSkillDef2 = Skills.CreateSkillDef(new SkillDefInfo
+
+            eldritchHealing = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryBomb",
+                skillName = "HealingForEveryone",
                 skillNameToken = VELIAERIS_PREFIX + "ERIS_SPECIAL_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "ERIS_SPECIAL_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
@@ -531,32 +597,35 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
-
+                baseRechargeInterval = 20f,
+                fullRestockOnAssign = true,
                 isCombatSkill = true,
                 mustKeyPress = false,
+                cancelSprintingOnActivation = true,
             });
 
-            SkillDef specialSkillDef3 = Skills.CreateSkillDef(new SkillDefInfo
+
+            selfBuffer = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryBomb",
+                skillName = "SelfBuff",
                 skillNameToken = VELIAERIS_PREFIX + "VELIA_SPECIAL_NAME",
                 skillDescriptionToken = VELIAERIS_PREFIX + "VELIA_SPECIAL_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(BlessingsFromBeyond)),
                 //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Detonator",
+                activationStateMachineName = "Buff",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
-
+                baseRechargeInterval = 30f,
+                fullRestockOnAssign = true,
                 isCombatSkill = true,
                 mustKeyPress = false,
+                cancelSprintingOnActivation = false,
             });
 
-            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef1,specialSkillDef2,specialSkillDef3);
+            Skills.AddSpecialSkills(bodyPrefab, voidDetonation,eldritchHealing,selfBuffer);
             
         }
         #endregion skills
@@ -655,15 +724,16 @@ namespace VeliaerisMod.Survivors.Veliaeris
             On.RoR2.HealthComponent.TakeDamage += this.HealthComponent_TakeDamage;
             On.RoR2.BuffCatalog.Init += BuffCatalog_Init;
             On.RoR2.CharacterBody.OnInventoryChanged += inventoryChange;
+//            CharacterBody.onBodyAwakeGlobal += this.bodyReset;
             CharacterBody.onBodyStartGlobal += this.bodySetup;
             On.RoR2.CharacterMaster.OnBodyDeath += this.deathEffect;
             On.RoR2.GlobalEventManager.OnHitEnemy += this.allyAbyss;
-            On.RoR2.UI.AssignStageToken.Start += this.gather;
+            On.RoR2.UI.AssignStageToken.Start += this.gatherStageName;
             RoR2.Stage.onStageStartGlobal += this.stageSetup;
             On.RoR2.Stage.BeginServer += this.clearPreviousAttempts;
         }
 
-        private void gather(On.RoR2.UI.AssignStageToken.orig_Start orig, RoR2.UI.AssignStageToken self)
+        private void gatherStageName(On.RoR2.UI.AssignStageToken.orig_Start orig, RoR2.UI.AssignStageToken self)
         {
             orig(self);
             TrueStageName = self.titleText.text;
@@ -730,6 +800,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                         ReviveTimer.ReviveDisabledTimer = 300f;
                         SkillLocator switchSkills = revivedbody.GetComponent<SkillLocator>();
                     System.Console.WriteLine("Vel state check: " + VeliaerisPlugin.VeliaerisStates);
+                        HeldState.paststate = VeliaerisPlugin.VeliaerisStates;
                         if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
                         {
                             VeliaerisPlugin.VeliaerisStates = VeliaerisState.Velia;
@@ -739,8 +810,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                             VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
                         }
                     System.Console.WriteLine("Velstate on death revive:" + VeliaerisPlugin.VeliaerisStates);
-                        HeldState.velState = VeliaerisPlugin.VeliaerisStates;
-                        VeliaerisPlugin.previousSplitSate = HeldState.velState;
+                    VeliaerisPlugin.previousSplitSate = VeliaerisPlugin.VeliaerisStates;
                         MergeandShift.SkillSwitch(switchSkills,false);
                         revivedbody.AddTimedBuffAuthority(VeliaerisBuffs.missingSibling.buffIndex, 20f);
                     }
@@ -859,10 +929,10 @@ namespace VeliaerisMod.Survivors.Veliaeris
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) < 1)
                     {
+                        System.Console.WriteLine("entered");
                         HeldState.gatheredSpecial = 0;
                         HeldState.hereticOverridesSpecial.Clear();
                     }
-
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) > HeldState.gatheredPrimary)
                     {
                         if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
@@ -895,6 +965,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
                         }
                         HeldState.gatheredSpecial++;
                     }
+                    System.Console.WriteLine("specialcount" + HeldState.gatheredSpecial);
+                    System.Console.WriteLine("item count:" + body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement));
+//                    System.Console.WriteLine("overridelist:" + HeldState.hereticOverridesSpecial[0].ToString());
                     SkillLocator skillLocator = body.GetComponent<SkillLocator>();
                     MergeandShift.SkillSwitch(skillLocator, true);
                 }
@@ -911,22 +984,30 @@ namespace VeliaerisMod.Survivors.Veliaeris
             
                 if (body.ToString().Contains("VeliaerisBody"))
                 {
+                    System.Console.WriteLine("Run Instance:" + Run.instance.stageClearCount);
                     if (Run.instance.stageClearCount < 1 && !justDied)
                     {
 
-                        VeliaerisState velstate;
-                        velstate = body.GetComponent<VeliaerisPassive>().getStartState();
-                        VeliaerisPlugin.VeliaerisStates = velstate;
-                        if (velstate == VeliaerisState.Velia || velstate == VeliaerisState.Eris)
+                        VeliaerisState velStartstate;
+                        velStartstate = body.GetComponent<VeliaerisPassive>().getStartState();
+                        HeldState.initalState = velStartstate;
+                        System.Console.WriteLine("passive: " + velStartstate);
+                        VeliaerisPlugin.VeliaerisStates = velStartstate;
+                        HeldState.velState = velStartstate;
+                        
+                        if (velStartstate == VeliaerisState.Velia || velStartstate == VeliaerisState.Eris)
                         {
                             HeldState.firstChange = false;
-                            VeliaerisPlugin.previousSplitSate = velstate;
+                            VeliaerisPlugin.previousSplitSate = velStartstate;
                         }
-                        SkillLocator skillLocator = body.GetComponent<SkillLocator>();
+
                         //                  System.Console.WriteLine("Current grabbed skillocator: " + skillLocator);
-                        MergeandShift.SkillSwitch(skillLocator, false);
+
                         ReviveTimer.ReviveDisabledTimer = 0f;
                     }
+                    SkillLocator skillLocator = body.GetComponent<SkillLocator>();
+                    MergeandShift.skillSet(skillLocator);
+                    MergeandShift.SkillSwitch(skillLocator, false);
                 }
             }
 
@@ -1093,10 +1174,15 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 args.damageMultAdd += 0.5f;
                 sender.bodyFlags |= CharacterBody.BodyFlags.ImmuneToVoidDeath;
             }
-            if(VeliaerisPlugin.VeliaerisStates==VeliaerisState.Veliaeris && sender.ToString().Contains("VeliaerisBody") && VeliaerisPlugin.hasVoid)
+            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris && sender.ToString().Contains("VeliaerisBody"))
             {
-                args.baseHealthAdd += (sender.baseMaxHealth * 0.05f) * voidInfluence;
-                args.damageMultAdd += 0.125f * voidInfluence;
+                args.baseHealthAdd += (sender.baseMaxHealth * 0.05f);
+                args.damageMultAdd += 0.125f;
+            }
+            if (VeliaerisPlugin.VeliaerisStates==VeliaerisState.Veliaeris && sender.ToString().Contains("VeliaerisBody") && VeliaerisPlugin.hasVoid)
+            {
+                args.baseHealthAdd += (sender.baseMaxHealth * 0.025f) * voidInfluence;
+                args.damageMultAdd += 0.0125f * voidInfluence;
             }
             if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris && sender.ToString().Contains("VeliaerisBody"))
             {
@@ -1120,6 +1206,15 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 args.armorAdd += 10f;
             }
 
+            if (sender.HasBuff(VeliaerisBuffs.healthBlessing))
+            {
+                args.baseHealthAdd += (sender.baseMaxHealth * 0.05f) * sender.GetBuffCount(VeliaerisBuffs.healthBlessing);
+            }
+            if (sender.HasBuff(VeliaerisBuffs.damageBlessing))
+            {
+                args.baseDamageAdd += 0.1f * sender.GetBuffCount(VeliaerisBuffs.damageBlessing);
+            }
+
         }
 
 
@@ -1137,9 +1232,10 @@ namespace VeliaerisMod.Survivors.Veliaeris
         public static bool justDied = false;
         private DamageColorIndex damageColor = DamageColorIndex.Void;
         public static int voidInfluence;
-        public static float DeathPreventionStacks = 0;
-        public static float VoidCorruptionStacks = 0;
+        public static int DeathPreventionStacks = 0;
+        public static int VoidCorruptionStacks = 0;
         public static String StageIdentity;
         public static String TrueStageName;
+        
     }
 }
