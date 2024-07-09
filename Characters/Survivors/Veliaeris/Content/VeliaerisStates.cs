@@ -17,20 +17,9 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
     public class HeldState : MonoBehaviour
     {
         [SerializeField]
-
-        public static VeliaerisState velState = VeliaerisState.Veliaeris;
-        public static List<VeliaerisState> hereticOverridesPrimary = new List<VeliaerisState>();
-        public static List<VeliaerisState> hereticOverridesSecondary = new List<VeliaerisState>();
-        public static List<VeliaerisState> hereticOverridesUtility = new List<VeliaerisState>();
-        public static List<VeliaerisState> hereticOverridesSpecial = new List<VeliaerisState>();
-        public static int gatheredPrimary = 0;
-        public static int gatheredSecondary = 0;
-        public static int gatheredUtility = 0;
-        public static int gatheredSpecial = 0;
+        public static int stageCount=0;
         public static bool destroyVeliaerisCorpse = false;
-        public static bool firstChange = true;
-        public static VeliaerisState paststate = VeliaerisState.Veliaeris;
-        public static VeliaerisState initalState;
+
     }
     public class VeliaerisPassive: MonoBehaviour {
         public GenericSkill passiveSkillSlot;
@@ -72,15 +61,18 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
         private static BodyIndex VoidlingBodyIndex = BodyIndex.None;
         public static CharacterMaster masterCharacter;
         public static float timeUntilSistersRevival = 0f;
-        public static float ReviveDisabledTimer = 0f;
         public static float startUpTimer;
         public static bool stageStarted = false;
         private bool mithrixFlag = false;
         private bool voidlingFlag = false;
         public static bool switchToEris = false;
+        private VeliaerisSurvivorController VeliaerisSurvivorController;
+
+        //
         public void Update()
         {
             CharacterBody body = this.GetComponent<CharacterBody>();
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
             float Erishealth = body.healthComponent.fullHealth;
             TeamComponent teamComponent = GetComponent<TeamComponent>();
             //            System.Console.WriteLine("Update teamComponent:" + teamComponent);
@@ -91,12 +83,12 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
 
             
 
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+            if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris)
             {
                 body.SetBuffCount(VeliaerisBuffs.inflictDeath.buffIndex, 0);
                 body.SetBuffCount(VeliaerisBuffs.revokeDeath.buffIndex, VeliaerisSurvivor.DeathPreventionStacks);
             }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+            if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
             {
                 body.SetBuffCount(VeliaerisBuffs.revokeDeath.buffIndex, 0);
                 body.SetBuffCount(VeliaerisBuffs.inflictDeath.buffIndex, VeliaerisSurvivor.VoidCorruptionStacks);
@@ -114,7 +106,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
                     if ((array[i].GetComponent<CharacterBody>().healthComponent.health + array[i].GetComponent<CharacterBody>().healthComponent.shield)/array[i].GetComponent<CharacterBody>().healthComponent.fullCombinedHealth <= 0.15f && body.GetBuffCount(VeliaerisBuffs.revokeDeath) > 0)
                     {
                         VeliaerisSurvivor.DeathPreventionStacks--;
-                        body.RemoveBuff(VeliaerisBuffs.revokeDeath.buffIndex);
+                        body.SetBuffCount(VeliaerisBuffs.revokeDeath.buffIndex,VeliaerisSurvivor.DeathPreventionStacks);
                         array[i].GetComponent<CharacterBody>().healthComponent.Heal((Erishealth * heldHealValue), default(ProcChainMask));
                     }
                     //                    array[i].GetComponent<CharacterBody>().AddTimedBuff(VeliaerisBuffs.lesserSistersBlessing, duration);
@@ -123,37 +115,31 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             if (timeUntilSistersRevival >= 0)
             {
                 timeUntilSistersRevival -= Time.deltaTime;
-                System.Console.WriteLine("time until:" + timeUntilSistersRevival);
+//                System.Console.WriteLine("time until:" + timeUntilSistersRevival);
             }
-            if(ReviveDisabledTimer >= 0)
+            if (VeliaerisSurvivorController.ReviveDisabledTimer >= 0)
             {
-                ReviveDisabledTimer -= Time.deltaTime;
+                VeliaerisSurvivorController.setNetworkReviveTimer -= Time.deltaTime;
                 if (!body.HasBuff(VeliaerisBuffs.splitRevive))
                 {
-                    body.AddTimedBuff(VeliaerisBuffs.splitRevive, ReviveDisabledTimer);
+                    body.AddTimedBuff(VeliaerisBuffs.splitRevive, VeliaerisSurvivorController.ReviveDisabledTimer);
                 }
-            }
-            else
-            {
-               VeliaerisSurvivor.justDied = false;
             }
 
             Corpse corpseIdentity = null;
-            for (int i = 0; i < Corpse.instancesList.Count; i++)
+            for (int i = Corpse.instancesList.Count-1; i >=0; i--)
             {
                 if (Corpse.instancesList[i].name.ToString() == ("mdlHenry"))
                 {
                     corpseIdentity = Corpse.instancesList[i];
+                    break;
                 }
-            }
-            if (corpseIdentity != null)
-            {
             }
             if (corpseIdentity != null && HeldState.destroyVeliaerisCorpse)
             {
                 Corpse.DestroyCorpse(corpseIdentity);
                 HeldState.destroyVeliaerisCorpse = false;
-                corpseIdentity = null;
+                corpseIdentity = null;  
             }
 
             MithrixBodyIndex = BodyCatalog.FindBodyIndex("BrotherBody");
@@ -166,7 +152,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             {
                 stageStarted = true;
                 SpeechDriver speech = new SpeechDriver();
-                speech.enacteDialogue("stage");
+                speech.enacteDialogue("stage",body);
             }
             ReadOnlyCollection<CharacterBody> readOnlyInstancesList = CharacterBody.readOnlyInstancesList;
 
@@ -176,9 +162,12 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
                 mithrixFlag |= bodyIndex == MithrixBodyIndex;
                 voidlingFlag |= bodyIndex == VoidlingBodyIndex;
             }
+            
 
         }
     }
+
+
 
     
 

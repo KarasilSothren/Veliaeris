@@ -22,7 +22,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates
             this.characterBody.healthComponent.Heal(Erishealth*0.5f,default(ProcChainMask));
             TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
             Util.CleanseBody(base.characterBody,true,false,false,true,true,false);
-            
+            System.Console.WriteLine("Entered Healing");
             for (int i = 0; i < array.Length; i++)
             {
 

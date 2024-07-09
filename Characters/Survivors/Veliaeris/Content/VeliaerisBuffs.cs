@@ -17,6 +17,9 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
         public static BuffDef damageBlessing;
         public static BuffDef revokeDeath;
         public static BuffDef inflictDeath;
+        public static BuffDef VeliaerisStatChanges;
+        public static BuffDef ErisStatChanges;
+        public static BuffDef VeliaStatChanges;
 
         public static void Init(AssetBundle assetBundle)
         {
@@ -84,6 +87,21 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/Blight").iconSprite,
                 Color.black,
                 true,
+                false);
+            VeliaerisStatChanges = Modules.Content.CreateAndAddBuff("Abyss Blessing",
+               LegacyResourcesAPI.Load<BuffDef>("BuffDefs/Blight").iconSprite,
+                Color.gray,
+                false,
+                false);
+            ErisStatChanges = Modules.Content.CreateAndAddBuff("Abyss Blessing",
+                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/Blight").iconSprite,
+                Color.gray,
+                false,
+                false);
+            VeliaStatChanges = Modules.Content.CreateAndAddBuff("Abyss Blessing",
+               LegacyResourcesAPI.Load<BuffDef>("BuffDefs/Blight").iconSprite,
+                Color.gray,
+                false,
                 false);
         }
     }

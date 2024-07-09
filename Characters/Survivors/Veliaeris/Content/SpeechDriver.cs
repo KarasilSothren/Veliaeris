@@ -7,6 +7,7 @@ using UnityEngine;
 using RoR2.CharacterSpeech;
 using RoR2.UI;
 using VeliaerisMod.Survivors.Veliaeris;
+using VeliaerisMod.Characters.Survivors.Veliaeris.Content;
 
 namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
 {
@@ -15,15 +16,17 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
         public static AssignStageToken tokenName;
         private static String voiceText;
         private static String displayedName;
-       
-        public void enacteDialogue(String activeEvent)
+        private VeliaerisSurvivorController VeliaerisSurvivorController;
+
+        public void enacteDialogue(String activeEvent,CharacterBody body)
         {
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
             displayedName = tokenName.titleText.text;
             String colorCodeEris = "<color=#026bf5>";
             String colorCodeVelia = "<color=#c40003>";
             String colorCodeVeliaeris = "<color=#a60fba>";
             String finalColorCode;
-            switch (VeliaerisPlugin.VeliaerisStates)
+            switch (VeliaerisSurvivorController.VeliaerisStates)
             {
                 case VeliaerisState.Velia:
                     finalColorCode = colorCodeVelia;
@@ -41,12 +44,12 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             switch (activeEvent)
             {
                 case "stage":
-                    stageDialogue();
+                    stageDialogue(body);
                     break;
                 default:
                     break;
             }
-            String voice = "<size=120%>" + finalColorCode +VeliaerisPlugin.VeliaerisStates.ToString()+": "+voiceText+"</size></color>";
+            String voice = "<size=120%>" + finalColorCode +VeliaerisSurvivorController.VeliaerisStates.ToString()+": "+voiceText+"</size></color>";
 
             Chat.AddMessage(voice);
            
@@ -86,8 +89,9 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
             desolation reef: voidstage
             alt momentwhole: [Info   :   Console] Internal Stage Name: BulwarksHaunt_GhostWave
         */
-        private void stageDialogue()
+        private void stageDialogue(CharacterBody body)
         {
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
             String variant;
             switch (VeliaerisSurvivor.StageIdentity)
             {
@@ -128,7 +132,7 @@ namespace VeliaerisMod.Characters.Survivors.Veliaeris.Content
                     break;
                 case "blackbeach":
                 case "blackbeach2":
-                    switch (VeliaerisPlugin.VeliaerisStates) 
+                    switch (VeliaerisSurvivorController.VeliaerisStates) 
                     {
                         case VeliaerisState.Veliaeris:
                             voiceText = "This beach feels rather distant from the world";

@@ -18,6 +18,8 @@ using UnityEngine.Networking;
 using VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates;
 using UnityEngine.SceneManagement;
 using RoR2.UI;
+using RoR2.EntitlementManagement;
+using RoR2.ExpansionManagement;
 
 namespace VeliaerisMod.Survivors.Veliaeris
 {
@@ -158,6 +160,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
             AddHitboxes();
 //            bodyPrefab.AddComponent<HenryWeaponComponent>();
             bodyPrefab.AddComponent<ReviveTimer>();
+            bodyPrefab.AddComponent<VeliaerisSurvivorController>();
             //bodyPrefab.AddComponent<HuntressTrackerComopnent>();
             //anything else here
         }
@@ -354,7 +357,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = true,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = true,
@@ -401,7 +404,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = true,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = true,
@@ -438,7 +441,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = true,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = true,
@@ -471,7 +474,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = true,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = true,
@@ -490,8 +493,6 @@ namespace VeliaerisMod.Survivors.Veliaeris
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
 
             //here's a skilldef of a typical movement skill.
-            
-
             MergeandShiftSkill = Skills.CreateSkillDef<VeliaerisRespawnSkillDef>(new SkillDefInfo
             {
                 skillName = "Merge and Shift",
@@ -513,7 +514,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = false,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = false,
@@ -526,7 +527,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
             {
                 skillName = "Split",
                 skillNameToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_NAME",
-                skillDescriptionToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_DESCRIPTION_" + VeliaerisPlugin.previousSplitSate,
+                skillDescriptionToken = VELIAERIS_PREFIX + "SPLIT_UTILITY_DESCRIPTION_SPLIT",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
                 keywordTokens = new string[] { "KEYWORD_AGILE", VELIAERIS_PREFIX + "SWITCH_INFORMATION" },
                 activationState = new EntityStates.SerializableEntityStateType(typeof(Split)),
@@ -534,6 +535,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
                 baseRechargeInterval = 15f,
+                
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -543,7 +545,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = false,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = false,
@@ -579,7 +581,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 baseRechargeInterval = 30f,
                 fullRestockOnAssign = true,
                 isCombatSkill = true,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 cancelSprintingOnActivation = false,
             });
 
@@ -600,7 +602,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 baseRechargeInterval = 20f,
                 fullRestockOnAssign = true,
                 isCombatSkill = true,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 cancelSprintingOnActivation = true,
             });
 
@@ -621,7 +623,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 baseRechargeInterval = 30f,
                 fullRestockOnAssign = true,
                 isCombatSkill = true,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 cancelSprintingOnActivation = false,
             });
 
@@ -743,15 +745,26 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
         private void clearPreviousAttempts(On.RoR2.Stage.orig_BeginServer orig, Stage self)
         {
-            ReviveTimer.ReviveDisabledTimer = 0f;
-            HeldState.gatheredPrimary = 0;
-            HeldState.hereticOverridesPrimary.Clear();
-            HeldState.gatheredSecondary = 0;
-            HeldState.hereticOverridesSecondary.Clear();
-            HeldState.gatheredUtility = 0;
-            HeldState.hereticOverridesUtility.Clear();
-            HeldState.gatheredSpecial = 0;
-            HeldState.hereticOverridesSpecial.Clear();
+            VeliaerisSurvivorController = bodyPrefab.GetComponent<VeliaerisSurvivorController>();
+            if (VeliaerisSurvivorController == null)
+            {
+                Debug.Log("is null");
+            }
+            else
+            {
+                Debug.Log("is not null");
+            }
+            VeliaerisSurvivorController.setNetworkReviveTimer = 0f;
+            Debug.Log("preclear");
+            VeliaerisSurvivorController.network_gatheredPrimary = 0;
+            VeliaerisSurvivorController.hereticOverridesPrimary.Clear();
+            Debug.Log("post clear");
+            VeliaerisSurvivorController.network_gatheredSecondary = 0;
+            VeliaerisSurvivorController.hereticOverridesSecondary.Clear();
+            VeliaerisSurvivorController.network_gatheredUtility = 0;
+            VeliaerisSurvivorController.hereticOverridesUtility.Clear();
+            VeliaerisSurvivorController.network_gatheredSpecial = 0;
+            VeliaerisSurvivorController.hereticOverridesSpecial.Clear();
             orig(self);
         }
 
@@ -774,13 +787,15 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
         private void deathEffect(On.RoR2.CharacterMaster.orig_OnBodyDeath orig, CharacterMaster self, CharacterBody body)
         {
-            
-//            if (NetworkServer.active)
-  //          {
 
-                if (body.ToString().Contains("VeliaerisBody"))
+            if (NetworkServer.active)
+            {
+                Debug.Log("is network active");
+            }
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
+            if (body.ToString().Contains("VeliaerisBody"))
                 {
-                    if (VeliaerisPlugin.VeliaerisStates != VeliaerisState.Veliaeris&&ReviveTimer.ReviveDisabledTimer<=0)
+                    if (VeliaerisSurvivorController.VeliaerisStates != VeliaerisState.Veliaeris&&VeliaerisSurvivorController.ReviveDisabledTimer<=0)
                     {
                         justDied = true;
                         self.lostBodyToDeath = false;
@@ -792,32 +807,40 @@ namespace VeliaerisMod.Survivors.Veliaeris
                         self.destroyOnBodyDeath = temporaryBody;
                         self.preventGameOver = true;
                         self.preventRespawnUntilNextStageServer = true;
-                        
+                        preventInventoryUpdate = true;
                         self.Respawn(vector, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
-                        self.ResetLifeStopwatch();
+//                        self.ResetLifeStopwatch();
                         CharacterBody revivedbody = self.GetBody();
                         ReviveTimer.timeUntilSistersRevival = 20f;
-                        ReviveTimer.ReviveDisabledTimer = 300f;
-                        SkillLocator switchSkills = revivedbody.GetComponent<SkillLocator>();
-                    System.Console.WriteLine("Vel state check: " + VeliaerisPlugin.VeliaerisStates);
-                        HeldState.paststate = VeliaerisPlugin.VeliaerisStates;
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+//                        VeliaerisSurvivorController.setNetworkReviveTimer = 300f;
+                    
+                    SkillLocator switchSkills = revivedbody.GetComponent<SkillLocator>();
+                    System.Console.WriteLine("Vel state check: " + VeliaerisSurvivorController.VeliaerisStates);
+                        VeliaerisSurvivorController.network_paststate = VeliaerisSurvivorController.VeliaerisStates;
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris)
                         {
-                            VeliaerisPlugin.VeliaerisStates = VeliaerisState.Velia;
+                            VeliaerisSurvivorController.network_veliaerisStates = VeliaerisState.Velia;
                         }
-                        else if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+                        else if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
                         {
-                            VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
+                            VeliaerisSurvivorController.network_veliaerisStates = VeliaerisState.Eris;
                         }
-                    System.Console.WriteLine("Velstate on death revive:" + VeliaerisPlugin.VeliaerisStates);
-                    VeliaerisPlugin.previousSplitSate = VeliaerisPlugin.VeliaerisStates;
-                        MergeandShift.SkillSwitch(switchSkills,false);
-                        revivedbody.AddTimedBuffAuthority(VeliaerisBuffs.missingSibling.buffIndex, 20f);
+                    VeliaerisSurvivorController.network_previousState = VeliaerisSurvivorController.VeliaerisStates;
+                    revivedbody.AddTimedBuffAuthority(VeliaerisBuffs.missingSibling.buffIndex, 20f);
+                    revivedbody = body;
+                    VeliaerisState velStartstate;
+                    velStartstate = body.GetComponent<VeliaerisPassive>().getStartState();
+                    VeliaerisSurvivorControllerrevived = revivedbody.GetComponent<VeliaerisSurvivorController>();
+//                    System.Console.WriteLine("VeliaerisStates on death revive:" + VeliaerisSurvivorController.VeliaerisStates);
+ //                   System.Console.WriteLine("VeliaerisStates on death revive revivedbody:" + VeliaerisSurvivorControllerrevived.VeliaerisStates);
+                    System.Console.WriteLine("revivetimer body:" + VeliaerisSurvivorController.ReviveDisabledTimer);
+                    MergeandShift.skillSet(switchSkills, revivedbody);
+                        MergeandShift.SkillSwitch(switchSkills,false,revivedbody);
                     }
                     else
                     {
                         ReviveTimer.timeUntilSistersRevival = 0f;
-                        ReviveTimer.ReviveDisabledTimer = 0f;
+                        VeliaerisSurvivorController.setNetworkReviveTimer = 0f;
                         orig(self, body);
                     }
                 }
@@ -848,6 +871,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
 //            System.Console.WriteLine("exist");
             try
             {
+                if (!preventInventoryUpdate)
+                {
+                    VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
                 if (body.ToString().Contains("VeliaerisBody"))
                 {
 
@@ -860,116 +886,123 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
                             voidInfluence = inventory.GetTotalItemCountOfTier(ItemTier.VoidTier1) + inventory.GetTotalItemCountOfTier(ItemTier.VoidTier2) + inventory.GetTotalItemCountOfTier(ItemTier.VoidTier3) + inventory.GetTotalItemCountOfTier(ItemTier.VoidBoss);
                         }
+                        if (voidInfluence >= 20)
+                        {
+                            body.bodyFlags |= CharacterBody.BodyFlags.Void;
+                        }
                     }
 
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) < HeldState.gatheredPrimary && HeldState.gatheredPrimary != 0)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) < VeliaerisSurvivorController.gatheredPrimary && VeliaerisSurvivorController.gatheredPrimary != 0)
                     {
-                        HeldState.gatheredPrimary--;
-                        if (HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
+                        VeliaerisSurvivorController.network_gatheredPrimary--;
+                        if (VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesPrimary.Remove(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesPrimary.Remove(VeliaerisSurvivorController.VeliaerisStates);
                         }
                         else
                         {
-                            HeldState.hereticOverridesPrimary.Remove(HeldState.hereticOverridesPrimary[1]);
+                            VeliaerisSurvivorController.hereticOverridesPrimary.Remove(VeliaerisSurvivorController.hereticOverridesPrimary[1]);
                         }
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSecondaryReplacement) < HeldState.gatheredSecondary && HeldState.gatheredSecondary != 0)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSecondaryReplacement) < VeliaerisSurvivorController.gatheredSecondary && VeliaerisSurvivorController.gatheredSecondary != 0)
                     {
-                        HeldState.gatheredSecondary--;
-                        if (HeldState.hereticOverridesSecondary.Contains(VeliaerisPlugin.VeliaerisStates))
+                        VeliaerisSurvivorController.network_gatheredSecondary--;
+                        if (VeliaerisSurvivorController.hereticOverridesSecondary.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesSecondary.Remove(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController .hereticOverridesSecondary.Remove(VeliaerisSurvivorController.VeliaerisStates);
                         }
                         else
                         {
-                            HeldState.hereticOverridesSecondary.Remove(HeldState.hereticOverridesSecondary[1]);
+                            VeliaerisSurvivorController.hereticOverridesSecondary.Remove(VeliaerisSurvivorController.hereticOverridesSecondary[1]);
                         }
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarUtilityReplacement) < HeldState.gatheredUtility && HeldState.gatheredUtility != 0)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarUtilityReplacement) < VeliaerisSurvivorController.gatheredUtility && VeliaerisSurvivorController.gatheredUtility != 0)
                     {
-                        HeldState.gatheredUtility--;
-                        if (HeldState.hereticOverridesUtility.Contains(VeliaerisPlugin.VeliaerisStates))
+                        VeliaerisSurvivorController.network_gatheredUtility--;
+                        if (VeliaerisSurvivorController.hereticOverridesUtility.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesUtility.Remove(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesUtility.Remove(VeliaerisSurvivorController.VeliaerisStates);
                         }
                         else
                         {
-                            HeldState.hereticOverridesUtility.Remove(HeldState.hereticOverridesUtility[1]);
+                            VeliaerisSurvivorController.hereticOverridesUtility.Remove(VeliaerisSurvivorController.hereticOverridesUtility[1]);
                         }
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) < HeldState.gatheredSpecial && HeldState.gatheredSpecial != 0)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) < VeliaerisSurvivorController.gatheredSpecial && VeliaerisSurvivorController.gatheredSpecial != 0)
                     {
-                        HeldState.gatheredSpecial--;
-                        if (HeldState.hereticOverridesSpecial.Contains(VeliaerisPlugin.VeliaerisStates))
+                       VeliaerisSurvivorController.network_gatheredSpecial--;
+                        if (VeliaerisSurvivorController.hereticOverridesSpecial.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesSpecial.Remove(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesSpecial.Remove(VeliaerisSurvivorController.VeliaerisStates);
                         }
                         else
                         {
-                            HeldState.hereticOverridesSpecial.Remove(HeldState.hereticOverridesSpecial[1]);
+                            VeliaerisSurvivorController.hereticOverridesSpecial.Remove(VeliaerisSurvivorController.hereticOverridesSpecial[1]);
                         }
                     }
 
 
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) < 1)
                     {
-                        HeldState.gatheredPrimary = 0;
-                        HeldState.hereticOverridesPrimary.Clear();
+                        VeliaerisSurvivorController.network_gatheredPrimary = 0;
+                        VeliaerisSurvivorController.hereticOverridesPrimary.Clear();
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarSecondaryReplacement) < 1)
                     {
-                        HeldState.gatheredSecondary = 0;
-                        HeldState.hereticOverridesSecondary.Clear();
+                        VeliaerisSurvivorController.network_gatheredSecondary = 0;
+                        VeliaerisSurvivorController.hereticOverridesSecondary.Clear();
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarUtilityReplacement) < 1)
                     {
-                        HeldState.gatheredUtility = 0;
-                        HeldState.hereticOverridesUtility.Clear();
+                        VeliaerisSurvivorController.network_gatheredUtility = 0;
+                        VeliaerisSurvivorController.hereticOverridesUtility.Clear();
                     }
                     if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) < 1)
                     {
                         System.Console.WriteLine("entered");
-                        HeldState.gatheredSpecial = 0;
-                        HeldState.hereticOverridesSpecial.Clear();
+                        VeliaerisSurvivorController.network_gatheredSpecial = 0;
+                        VeliaerisSurvivorController.hereticOverridesSpecial.Clear();
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) > HeldState.gatheredPrimary)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarPrimaryReplacement) > VeliaerisSurvivorController.gatheredPrimary)
                     {
-                        if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
+                        if (!VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesPrimary.Add(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesPrimary.Add(VeliaerisSurvivorController.VeliaerisStates);
                         }
-                        HeldState.gatheredPrimary++;
+                        VeliaerisSurvivorController.network_gatheredPrimary++;
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSecondaryReplacement) > HeldState.gatheredSecondary)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSecondaryReplacement) > VeliaerisSurvivorController.gatheredSecondary)
                     {
-                        if (!HeldState.hereticOverridesSecondary.Contains(VeliaerisPlugin.VeliaerisStates))
+                        if (!VeliaerisSurvivorController.hereticOverridesSecondary.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesSecondary.Add(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesSecondary.Add(VeliaerisSurvivorController.VeliaerisStates);
                         }
-                        HeldState.gatheredSecondary++;
+                        VeliaerisSurvivorController.network_gatheredSecondary++;
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarUtilityReplacement) > HeldState.gatheredUtility)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarUtilityReplacement) > VeliaerisSurvivorController.gatheredUtility)
                     {
-                        if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
+                        if (!VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesUtility.Add(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesUtility.Add(VeliaerisSurvivorController.VeliaerisStates);
                         }
-                        HeldState.gatheredUtility++;
+                        VeliaerisSurvivorController.network_gatheredUtility++;
                     }
-                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) > HeldState.gatheredSpecial)
+                    if (body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement) > VeliaerisSurvivorController.gatheredSpecial)
                     {
-                        if (!HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates))
+                        if (!VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisSurvivorController.VeliaerisStates))
                         {
-                            HeldState.hereticOverridesSpecial.Add(VeliaerisPlugin.VeliaerisStates);
+                            VeliaerisSurvivorController.hereticOverridesSpecial.Add(VeliaerisSurvivorController.VeliaerisStates);
                         }
-                        HeldState.gatheredSpecial++;
+                        VeliaerisSurvivorController.network_gatheredSpecial++;
                     }
-                    System.Console.WriteLine("specialcount" + HeldState.gatheredSpecial);
+                    System.Console.WriteLine("specialcount" + VeliaerisSurvivorController.gatheredSpecial);
                     System.Console.WriteLine("item count:" + body.inventory.GetItemCount(RoR2Content.Items.LunarSpecialReplacement));
 //                    System.Console.WriteLine("overridelist:" + HeldState.hereticOverridesSpecial[0].ToString());
                     SkillLocator skillLocator = body.GetComponent<SkillLocator>();
-                    MergeandShift.SkillSwitch(skillLocator, true);
+                    System.Console.WriteLine("check form:" + VeliaerisSurvivorController.velState);
+                        MergeandShift.SkillSwitch(skillLocator, true, body);
+                    }
+                    preventInventoryUpdate = false;
                 }
 
             }
@@ -980,37 +1013,76 @@ namespace VeliaerisMod.Survivors.Veliaeris
         {
             if (body != null)
             {
+                VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
                 //System.Console.WriteLine("Body grabbed: " + body);
-            
+
                 if (body.ToString().Contains("VeliaerisBody"))
                 {
-                    System.Console.WriteLine("Run Instance:" + Run.instance.stageClearCount);
-                    if (Run.instance.stageClearCount < 1 && !justDied)
-                    {
+                    Run instance = Run.instance;
+                    //                    PlayerCharacterMasterControllerEntitlementTracker component = body.master.playerCharacterMasterController.GetComponent<PlayerCharacterMasterControllerEntitlementTracker>();
+                    //                  EntitlementDef requiredEntitlement = this.requiredExpansion.requiredEntitlement;
+                    //if (!component.HasEntitlement(requiredEntitlement)){
+                    //    VeliaerisPlugin.hasVoid = false;
+                    //}
+                    System.Console.WriteLine("has void");
+                    System.Console.WriteLine("Run Instance:" + instance.stageClearCount);
+                    //switch () {
+                    //body.SetBuffCount(VeliaerisBuffs.VeliaStatChanges.buffIndex, 1);
+                    //}
+                    
 
                         VeliaerisState velStartstate;
                         velStartstate = body.GetComponent<VeliaerisPassive>().getStartState();
-                        HeldState.initalState = velStartstate;
                         System.Console.WriteLine("passive: " + velStartstate);
-                        VeliaerisPlugin.VeliaerisStates = velStartstate;
-                        HeldState.velState = velStartstate;
-                        
+                    VeliaerisSurvivorController.network_initial = velStartstate;
+                    if (instance.stageClearCount < 1 && !justDied)
+                    {
+                        System.Console.WriteLine("entered <1");
+                        VeliaerisSurvivorController.network_veliaerisStates = velStartstate;
+                        VeliaerisSurvivorController.setNetworkReviveTimer = 0f;
+
                         if (velStartstate == VeliaerisState.Velia || velStartstate == VeliaerisState.Eris)
                         {
-                            HeldState.firstChange = false;
-                            VeliaerisPlugin.previousSplitSate = velStartstate;
-                        }
+                            System.Console.WriteLine("etnered dual");
+                            VeliaerisSurvivorController.network_firstchange = false;
+                            VeliaerisSurvivorController.network_previousState = velStartstate;
 
+                        }
+                    }
+                    System.Console.WriteLine("justdiedstatus:" + justDied);
+                    if (justDied)
+                    {
+                        VeliaerisSurvivorController.setNetworkReviveTimer = 300f;
+                        VeliaerisSurvivorController.network_veliaerisStates = VeliaerisSurvivorController.previousSplitSate;
+                        justDied = false;
+                    }
                         //                  System.Console.WriteLine("Current grabbed skillocator: " + skillLocator);
 
-                        ReviveTimer.ReviveDisabledTimer = 0f;
-                    }
+                        
+                    System.Console.WriteLine("initialstate bodyset:" + VeliaerisSurvivorController.initalState);
+                    System.Console.WriteLine("previoussplit bodyset" + VeliaerisSurvivorController.previousSplitSate);
+                    System.Console.WriteLine("veliaerisstate: " + VeliaerisSurvivorController.VeliaerisStates);
+                    System.Console.WriteLine("revivetimer body:" + VeliaerisSurvivorController.ReviveDisabledTimer);
                     SkillLocator skillLocator = body.GetComponent<SkillLocator>();
-                    MergeandShift.skillSet(skillLocator);
-                    MergeandShift.SkillSwitch(skillLocator, false);
-                }
-            }
+                        MergeandShift.skillSet(skillLocator,body);
+                        MergeandShift.SkillSwitch(skillLocator, true,body);
+                    
+                    if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Veliaeris)
+                    {
+                        body.SetBuffCount(VeliaerisBuffs.VeliaerisStatChanges.buffIndex, 1);
+                    }
+                    if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris)
+                    {
+                        body.SetBuffCount(VeliaerisBuffs.ErisStatChanges.buffIndex, 1);
+                    }
+                    if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
+                    {
+                        body.SetBuffCount(VeliaerisBuffs.VeliaStatChanges.buffIndex, 1);
+                    }
 
+                }
+
+            }
         }
 
         private void stageSetup(Stage stage)
@@ -1023,7 +1095,6 @@ namespace VeliaerisMod.Survivors.Veliaeris
             ReviveTimer.startUpTimer = 0f;
             DeathPreventionStacks = 0;
             VoidCorruptionStacks = 0;
-            VeliaerisPlugin.VeliaerisStates = HeldState.velState;
         }
 
         private void BuffCatalog_Init(On.RoR2.BuffCatalog.orig_Init orig)
@@ -1174,17 +1245,12 @@ namespace VeliaerisMod.Survivors.Veliaeris
                 args.damageMultAdd += 0.5f;
                 sender.bodyFlags |= CharacterBody.BodyFlags.ImmuneToVoidDeath;
             }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris && sender.ToString().Contains("VeliaerisBody"))
-            {
-                args.baseHealthAdd += (sender.baseMaxHealth * 0.05f);
-                args.damageMultAdd += 0.125f;
-            }
-            if (VeliaerisPlugin.VeliaerisStates==VeliaerisState.Veliaeris && sender.ToString().Contains("VeliaerisBody") && VeliaerisPlugin.hasVoid)
+            if (sender.HasBuff(VeliaerisBuffs.VeliaerisStatChanges) && VeliaerisPlugin.hasVoid)
             {
                 args.baseHealthAdd += (sender.baseMaxHealth * 0.025f) * voidInfluence;
                 args.damageMultAdd += 0.0125f * voidInfluence;
             }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris && sender.ToString().Contains("VeliaerisBody"))
+            if (sender.HasBuff(VeliaerisBuffs.ErisStatChanges))
             {
 //                System.Console.WriteLine("is eris");
                 args.baseHealthAdd += sender.baseMaxHealth * 0.75f;
@@ -1195,9 +1261,10 @@ namespace VeliaerisMod.Survivors.Veliaeris
 //                args.baseDamageAdd -= sender.baseDamage;
                 args.armorAdd -= 10f;
             }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia && sender.ToString().Contains("VeliaerisBody"))
+            if (sender.HasBuff(VeliaerisBuffs.VeliaStatChanges))
             {
-                args.baseHealthAdd -= sender.baseMaxHealth * 0.25f;
+                //     args.baseHealthAdd -= sender.baseMaxHealth * 0.25f;
+                args.baseHealthAdd -= sender.baseMaxHealth * 0.9f;
                 args.damageMultAdd += 0.5f;
                 if (VeliaerisPlugin.hasVoid)
                 {
@@ -1214,7 +1281,13 @@ namespace VeliaerisMod.Survivors.Veliaeris
             {
                 args.baseDamageAdd += 0.1f * sender.GetBuffCount(VeliaerisBuffs.damageBlessing);
             }
-
+            if (sender.HasBuff(VeliaerisBuffs.switchInvincibility))
+            {
+                if (sender.healthComponent.health > sender.healthComponent.fullHealth)
+                {
+                    sender.healthComponent.health = sender.healthComponent.health - sender.healthComponent.fullHealth;
+                }
+            }
         }
 
 
@@ -1236,6 +1309,9 @@ namespace VeliaerisMod.Survivors.Veliaeris
         public static int VoidCorruptionStacks = 0;
         public static String StageIdentity;
         public static String TrueStageName;
-        
+        public ExpansionDef requiredExpansion;
+        private VeliaerisSurvivorController VeliaerisSurvivorController;
+        private bool preventInventoryUpdate;
+        private VeliaerisSurvivorController VeliaerisSurvivorControllerrevived;
     }
 }

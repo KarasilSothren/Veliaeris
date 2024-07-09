@@ -73,9 +73,7 @@ namespace VeliaerisMod.Survivors.Veliaeris
 
             #region DualUtility
             Language.Add(prefix + "SPLIT_UTILITY_NAME", "Split");
-            Language.Add(prefix + "SPLIT_UTILITY_DESCRIPTION_Eris", Tokens.agilePrefix + $"Split into two personas changing into either Eris or Velia.\nOn this switch you will change into <color=#0787f0>Eris</color>");
-            Language.Add(prefix + "SPLIT_UTILITY_DESCRIPTION_Velia", Tokens.agilePrefix + $"Split into two personas changing into either Eris or Velia.\nOn this switch you will change into <color=#fc0000>Velia</color>");
-            Language.Add(prefix + "SPLIT_UTILITY_DESCRIPTION_MENU", Tokens.agilePrefix + $"Split into two personas changing into either Eris or Velia. On switching you will Switch to the previous Persona you were, Eris by default.");
+            Language.Add(prefix + "SPLIT_UTILITY_DESCRIPTION_SPLIT", Tokens.agilePrefix + $"Split into two personas changing into either <color=#0787f0>Eris</color> or <color=#fc0000>Velia</color> based on who you were previously.");
             Language.Add(prefix + "MERGE_UTILITY_NAME", "Merge Or Switch");
             Language.Add(prefix + "MERGE_UTILITY_DESCRIPTION", Tokens.agilePrefix + "Press to merge back into Veliaeris or hold to switch to the other Persona.");
             #endregion

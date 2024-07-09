@@ -15,33 +15,38 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         private readonly AssetBundle assets = VeliaerisSurvivor.instance.assetBundle;
         private string prefix = VeliaerisSurvivor.VELIAERIS_PREFIX;
         private float duration =0.2f;
+        private VeliaerisSurvivorController VeliaerisSurvivorController;
+
         public override void OnEnter()
         {
             CharacterBody body;
             body = GetComponent<CharacterBody>();
-            body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
+//            body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
             base.OnEnter();
-            if (base.isAuthority && HeldState.firstChange)
+            if (base.isAuthority && VeliaerisSurvivorController.firstChange)
             {
-                VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
-                VeliaerisPlugin.previousSplitSate = VeliaerisState.Eris;
-                HeldState.velState = VeliaerisState.Eris;
-                HeldState.firstChange = false;
+                VeliaerisSurvivorController.network_veliaerisStates = VeliaerisState.Eris;
+                VeliaerisSurvivorController.network_previousState = VeliaerisState.Eris;
+                VeliaerisSurvivorController.network_velState = VeliaerisState.Eris;
+                VeliaerisSurvivorController.network_firstchange = false;
             }
             else
             {
-                VeliaerisPlugin.VeliaerisStates = VeliaerisPlugin.previousSplitSate;
-                HeldState.velState = VeliaerisPlugin.previousSplitSate;
+                VeliaerisSurvivorController.network_veliaerisStates = VeliaerisSurvivorController.previousSplitSate;
+                VeliaerisSurvivorController.network_velState = VeliaerisSurvivorController.previousSplitSate;
             }
-            HeldState.paststate = VeliaerisState.Veliaeris;
-            if(VeliaerisPlugin.VeliaerisStates==VeliaerisState.Eris)
+            body.SetBuffCount(VeliaerisBuffs.VeliaerisStatChanges.buffIndex, 0);
+            VeliaerisSurvivorController.network_paststate = VeliaerisState.Veliaeris;
+            if(VeliaerisSurvivorController.VeliaerisStates==VeliaerisState.Eris)
             {
+                body.SetBuffCount(VeliaerisBuffs.ErisStatChanges.buffIndex, 1);
                 TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
                 for (int i = 0; i < array.Length; i++)
                 {
                     if (array[i].teamIndex == this.teamComponent.teamIndex)
                     {
-                        if (!array[i].GetComponent<CharacterBody>().ToString().Contains("VeliaerisBody"))
+                        if (!array[i].GetComponent<CharacterBody>().master.GetBody())
                         {
                             array[i].GetComponent<CharacterBody>().AddBuff(VeliaerisBuffs.healthBlessing);
                         }
@@ -52,14 +57,15 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     VeliaerisSurvivor.DeathPreventionStacks++;
                 }
             }
-            if(VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+            if(VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
             {
-                    TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
+                body.SetBuffCount(VeliaerisBuffs.VeliaStatChanges.buffIndex, 1);
+                TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
                     for (int i = 0; i < array.Length; i++)
                     {
                         if (array[i].teamIndex == this.teamComponent.teamIndex)
                         {
-                        if (!array[i].GetComponent<CharacterBody>().ToString().Contains("VeliaerisBody"))
+                        if (!array[i].GetComponent<CharacterBody>().master.GetBody())
                         {
                             array[i].GetComponent<CharacterBody>().AddBuff(VeliaerisBuffs.damageBlessing);
                         }
@@ -73,19 +79,19 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
    
 
 
-            VeliaerisMod.Survivors.Veliaeris.SkillStates.MergeandShift.SkillSwitch(base.skillLocator,false);
-            //if (VeliaerisPlugin.VeliaerisStates != VeliaerisStates.Veliaeris)
+            MergeandShift.SkillSwitch(base.skillLocator,true,body);
+            //if (HeldState.VeliaerisStates != VeliaerisStates.Veliaeris)
             //{
-            //    if (VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Velia)
+            //    if (HeldState.VeliaerisStates == VeliaerisStates.Velia)
             //    {
             //        base.skillLocator.primary.SetSkillOverride(base.skillLocator.primary, secondprimarySkillDef, GenericSkill.SkillOverridePriority.Contextual);
             //    }
-            //    else if (VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Eris)
+            //    else if (HeldState.VeliaerisStates == VeliaerisStates.Eris)
             //    {
             //        base.skillLocator.primary.SetSkillOverride(base.skillLocator.primary, primarySkillDef3, GenericSkill.SkillOverridePriority.Contextual);
             //    }
             //}
-            //else if (VeliaerisPlugin.VeliaerisStates == VeliaerisStates.Veliaeris)
+            //else if (HeldState.VeliaerisStates == VeliaerisStates.Veliaeris)
             //{
             //    base.skillLocator.primary.SetSkillOverride(base.skillLocator.primary, primarySkillDef2, GenericSkill.SkillOverridePriority.Contextual);
             //}

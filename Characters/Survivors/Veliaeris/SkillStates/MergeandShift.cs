@@ -13,7 +13,6 @@ using RoR2.Skills;
 using VeliaerisMod.Characters.Survivors.Veliaeris.SkillStates;
 using System.Linq;
 using UnityEngine.Networking;
-using EntityStates.Missions.Moon;
 
 //CharacterBody.BodyFlags.ImmuneToVoidDeath
 
@@ -25,61 +24,94 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         private HurtBox[] targetTargetsCurse;
         private float stopwatch;
         private float VeliaDesolationRange = 40f;
+        private static VeliaerisSurvivorController VeliaerisSurvivorController;
+        private static VeliaerisState velStartstate;
+
         public override void OnEnter()
         {
-
-            System.Console.WriteLine("Entered");
-            this.stopwatch = 0f;
             CharacterBody body;
             body = GetComponent<CharacterBody>();
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
+            System.Console.WriteLine("controller state: " + VeliaerisSurvivorController.VeliaerisStates);
+            //            System.Console.WriteLine("Entered");
+            this.stopwatch = 0f;
+            Debug.Log("current body:" + body.name);
         }
 
         public override void FixedUpdate()
         {
+//            System.Console.WriteLine(VeliaerisSurvivorController.testState);
             System.Console.WriteLine("fixed");
             CharacterBody body;
             body = GetComponent<CharacterBody>();
+            //            base.FixedUpdate();
             base.FixedUpdate();
-
-                body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
-                //System.Console.WriteLine("skill3 is being held down");
-                this.stopwatch += Time.fixedDeltaTime;
-                //System.Console.WriteLine("stopwatch count: "+ stopwatch);
-            System.Console.WriteLine("stopwatch:" + stopwatch);
+            //System.Console.WriteLine("skill3 is being held down");
+            this.stopwatch += Time.fixedDeltaTime;
+                System.Console.WriteLine("stopwatch count: "+ stopwatch);
             //            System.Console.WriteLine("t")
             //System.Console.WriteLine("stopwatch count: "+ stopwatch);
-            if (stopwatch>1)
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
+            if (NetworkServer.active)
             {
-                if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+                System.Console.WriteLine("networkactive");
+                Debug.Log("networksuvivorteststate:"+VeliaerisSurvivorController.VeliaerisStates);
+            }
+            else
+            {
+                System.Console.WriteLine("networknotactive");
+                Debug.Log("networksuvivorteststate:"+VeliaerisSurvivorController.VeliaerisStates);
+            }
+            if ((stopwatch>1.2 &&base.isAuthority)||(stopwatch>1&&NetworkServer.active))
+            {
+                if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris)
                 {
-
-                    VeliaerisPlugin.VeliaerisStates = VeliaerisState.Velia;
+                    body.SetBuffCount(VeliaerisBuffs.ErisStatChanges.buffIndex, 0);
+                    body.SetBuffCount(VeliaerisBuffs.VeliaStatChanges.buffIndex, 1);
+                    VeliaerisSurvivorController.network_veliaerisStates = VeliaerisState.Velia;
                     //System.Console.WriteLine("Entered Velia State");
-                    VeliaerisPlugin.previousSplitSate = VeliaerisState.Velia;
-                    HeldState.velState = VeliaerisState.Velia;
-                    HeldState.paststate = VeliaerisState.Velia;
-                    SkillSwitch(skillLocator, false);
+                    VeliaerisSurvivorController.network_previousState = VeliaerisState.Velia;
+                    VeliaerisSurvivorController.network_velState = VeliaerisState.Velia;
+                    VeliaerisSurvivorController.network_paststate = VeliaerisState.Velia;
+                    SkillSwitch(skillLocator, true,body);
                 }
-                else if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+                else if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
                 {
-
-                    HeldState.paststate = VeliaerisState.Eris;
+                    body.SetBuffCount(VeliaerisBuffs.VeliaStatChanges.buffIndex, 0);
+                    body.SetBuffCount(VeliaerisBuffs.ErisStatChanges.buffIndex, 1);
+                    VeliaerisSurvivorController.network_paststate = VeliaerisState.Eris;
 //                    System.Console.WriteLine("refute stacks: " + VeliaerisSurvivor.DeathPreventionStacks);
-                    VeliaerisPlugin.VeliaerisStates = VeliaerisState.Eris;
-                    //System.Console.WriteLine("Entered Eris state");
-                    VeliaerisPlugin.previousSplitSate = VeliaerisState.Eris;
-                    HeldState.velState = VeliaerisState.Eris;
-                    SkillSwitch(skillLocator, false);
+                    VeliaerisSurvivorController.network_veliaerisStates = VeliaerisState.Eris;
+                    System.Console.WriteLine("Entered Eris state");
+                    VeliaerisSurvivorController.network_previousState = VeliaerisState.Eris;
+                    VeliaerisSurvivorController.network_velState = VeliaerisState.Eris;
+                    TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        if (array[i].teamIndex == teamComponent.teamIndex)
+                        {
+
+                            array[i].GetComponent<CharacterBody>().healthComponent.AddBarrierAuthority(this.characterBody.healthComponent.fullCombinedHealth * 0.5f);
+                        }
+                    }
+                    SkillSwitch(skillLocator, true,body);
                 }
+                body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
                 this.outer.SetNextStateToMain();
                 return;
 
             }
-            if (!inputBank.skill3.down)
+            if (!inputBank.skill3.down && base.isAuthority)
             {
+                body.SetBuffCount(VeliaerisBuffs.ErisStatChanges.buffIndex, 0);
+                body.SetBuffCount(VeliaerisBuffs.VeliaStatChanges.buffIndex, 0);
+                body.SetBuffCount(VeliaerisBuffs.VeliaerisStatChanges.buffIndex, 1);
+                System.Console.WriteLine("Let go");
+                body.AddTimedBuff(VeliaerisBuffs.switchInvincibility, 1f);
                 this.outer.SetNextStateToMain();
                 return;
             }
+            
 
 
 
@@ -91,13 +123,14 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         public override void OnExit() {
             CharacterBody body;
             body = GetComponent<CharacterBody>();
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
             if (stopwatch < 1)
             {
-                HeldState.paststate = VeliaerisPlugin.previousSplitSate;
-                System.Console.WriteLine("split state:" + VeliaerisPlugin.previousSplitSate);
-                VeliaerisPlugin.VeliaerisStates = VeliaerisState.Veliaeris;
-                HeldState.velState = VeliaerisState.Veliaeris;
-                SkillSwitch(skillLocator, false);
+                VeliaerisSurvivorController.network_paststate = VeliaerisSurvivorController.previousSplitSate;
+                System.Console.WriteLine("split state:" + VeliaerisSurvivorController.previousSplitSate);
+                VeliaerisSurvivorController.network_veliaerisStates = VeliaerisState.Veliaeris;
+                VeliaerisSurvivorController.network_velState = VeliaerisState.Veliaeris;
+                SkillSwitch(skillLocator, true, body);
              
                 if (body.HasBuff(VeliaerisBuffs.revokeDeath))
                 {
@@ -109,9 +142,10 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 }
             }
 
-            System.Console.WriteLine("Exit plugin: " + VeliaerisPlugin.VeliaerisStates);
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
+            System.Console.WriteLine("Exit plugin: " + VeliaerisSurvivorController.VeliaerisStates);
+            switch(VeliaerisSurvivorController.VeliaerisStates)
             {
+                case VeliaerisState.Veliaeris:
                 System.Console.WriteLine("entered curses");
                 BullseyeSearch targetSearch = new BullseyeSearch();
                 targetSearch.filterByDistinctEntity = true;
@@ -135,30 +169,32 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 {
                     for (int j = 0; j < (VeliaerisSurvivor.voidInfluence / 10) + 1; j++)
                     {
-                        targetTargetsCurse[i].healthComponent.body.AddTimedBuffAuthority(RoR2Content.Buffs.PermanentCurse.buffIndex,float.PositiveInfinity);
+                        targetTargetsCurse[i].healthComponent.body.AddTimedBuff(RoR2Content.Buffs.PermanentCurse.buffIndex,float.PositiveInfinity);
                     }
                     //                    targetTargets[i].healthComponent.body.AddBuff(RoR2Content.Buffs.PermanentCurse);
                 }
-            }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
-            {
+                    break;
+
+
+                case VeliaerisState.Velia:
+                System.Console.WriteLine("Entered burst");
                 if (VeliaerisSurvivor.voidInfluence >= 20)
-            {
+                {
                 //  if (NetworkServer.active)
                 //{
-                BullseyeSearch targetSearch = new BullseyeSearch();
-                targetSearch.filterByDistinctEntity = true;
-                targetSearch.filterByLoS = false;
-                targetSearch.maxDistanceFilter = 15f;
-                targetSearch.minDistanceFilter = 0f;
-                targetSearch.minAngleFilter = 0f;
-                targetSearch.maxAngleFilter = 360f;
-                targetSearch.sortMode = BullseyeSearch.SortMode.Distance;
-                targetSearch.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
-                targetSearch.searchOrigin = base.characterBody.corePosition;
-                targetSearch.RefreshCandidates();
-                targetSearch.FilterOutGameObject(base.gameObject);
-                IEnumerable<HurtBox> results = targetSearch.GetResults();
+                BullseyeSearch targetSearchChasm = new BullseyeSearch();
+                targetSearchChasm.filterByDistinctEntity = true;
+                targetSearchChasm.filterByLoS = false;
+                targetSearchChasm.maxDistanceFilter = 15f;
+                targetSearchChasm.minDistanceFilter = 0f;
+                targetSearchChasm.minAngleFilter = 0f;
+                targetSearchChasm.maxAngleFilter = 360f;
+                targetSearchChasm.sortMode = BullseyeSearch.SortMode.Distance;
+                targetSearchChasm.teamMaskFilter = TeamMask.GetUnprotectedTeams(base.GetTeam());
+                targetSearchChasm.searchOrigin = base.characterBody.corePosition;
+                targetSearchChasm.RefreshCandidates();
+                targetSearchChasm.FilterOutGameObject(base.gameObject);
+                IEnumerable<HurtBox> results = targetSearchChasm.GetResults();
                 this.targetTargets = results.ToArray<HurtBox>();
                 DamageInfo desolation = new DamageInfo();
                 HurtBox targetHurtBox = null;
@@ -179,7 +215,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                         }
                 }
                 // }
-            }
+                }
 
                 //                    if (NetworkServer.active)
                 //                  {
@@ -233,29 +269,20 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                 blastAttack.damageColorIndex = DamageColorIndex.Void;
                 blastAttack.attackerFiltering = AttackerFiltering.NeverHitSelf;
                 blastAttack.Fire();
-            }
-            if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
-            {
-                float Erishealth = body.healthComponent.fullHealth+(body.healthComponent.fullHealth*0.75f);
-                TeamComponent[] array = UnityEngine.Object.FindObjectsOfType<TeamComponent>();
-                for (int i = 0; i < array.Length; i++)
-                {
-                    if (array[i].teamIndex == teamComponent.teamIndex)
-                    {
-                        array[i].GetComponent<CharacterBody>().healthComponent.AddBarrierAuthority(Erishealth * 0.5f);
-                    }
-                }
-            }
+                break;
+
+                            }
             //                }
 
             base.OnExit();
         }
 
-
-        public static void skillSet(SkillLocator skillLocator)
+        public static void skillSet(SkillLocator skillLocator,CharacterBody body)
         {
-            System.Console.WriteLine("Skillset heldstate: " + HeldState.velState);
-            switch (HeldState.initalState)
+            VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
+            velStartstate = body.GetComponent<VeliaerisPassive>().getStartState();
+            System.Console.WriteLine("Skillset heldstate: " + VeliaerisSurvivorController.velState);
+            switch (velStartstate)
             {
                 case VeliaerisState.Veliaeris:
                     System.Console.WriteLine("SkillSetVeliaeris");
@@ -288,35 +315,37 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             }
         }
 
-        public static void SkillSwitch(SkillLocator skillLocator, bool isHereticPickup)
+        public static void SkillSwitch(SkillLocator skillLocator, bool isNotRevived, CharacterBody body)
         {
-           // if (isHereticPickup==false)
-          //  {
-                System.Console.WriteLine("Skillswitch heldstate: " + HeldState.velState);
-                System.Console.WriteLine("Pluginstate: " + VeliaerisPlugin.VeliaerisStates);
-                System.Console.WriteLine("inital" + HeldState.initalState);
-                switch (HeldState.initalState)
+            // if (isHereticPickup==false)
+            //  {
+                VeliaerisSurvivorController = body.GetComponent<VeliaerisSurvivorController>();
+                velStartstate = body.GetComponent<VeliaerisPassive>().getStartState();
+                System.Console.WriteLine("Skillswitch heldstate: " + VeliaerisSurvivorController.velState);
+                System.Console.WriteLine("Pluginstate: " + VeliaerisSurvivorController.VeliaerisStates);
+                System.Console.WriteLine("inital" + velStartstate);
+                switch (velStartstate)
                 {
                     case VeliaerisState.Veliaeris:
                         System.Console.WriteLine("Switch Case: Veliaeris");
-                        
-                                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.eldritchHealing, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.circularSlash, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
-                                skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.selfBuffer, GenericSkill.SkillOverridePriority.Network);
-                        
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+
+                        skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.eldritchHealing, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.circularSlash, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.selfBuffer, GenericSkill.SkillOverridePriority.Network);
+
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris)
                         {
                             skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.utility.SetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.special.SetSkillOverride(skillLocator.special, VeliaerisSurvivor.eldritchHealing, GenericSkill.SkillOverridePriority.Network);
                         }
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
                         {
                             skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.circularSlash, GenericSkill.SkillOverridePriority.Network);
@@ -325,56 +354,52 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                         }
                         break;
                     case VeliaerisState.Eris:
-                        System.Console.WriteLine("Switch Case: Eris");
+                        System.Console.WriteLine("Switch case: Eris");
+                        skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.circularSlash, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.selfBuffer, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.CorruptAndHeal, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.split, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Network);
 
-                        System.Console.WriteLine("entered unset");
-                            skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.circularSlash, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.selfBuffer, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.CorruptAndHeal, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.split, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Network);
-                        
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Veliaeris)
                         {
-                        System.Console.WriteLine("Entered veliaeris set");
                             skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.CorruptAndHeal, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.utility.SetSkillOverride(skillLocator.utility, VeliaerisSurvivor.split, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.special.SetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Network);
                         }
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia)
                         {
-                        System.Console.WriteLine("Entered velia set");
-                        skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
+                            skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.reductionScythe, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.circularSlash, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.utility.SetSkillOverride(skillLocator.utility, VeliaerisSurvivor.MergeandShiftSkill, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.special.SetSkillOverride(skillLocator.special, VeliaerisSurvivor.selfBuffer, GenericSkill.SkillOverridePriority.Network);
                         }
-                            
+
                         break;
                     case VeliaerisState.Velia:
                         System.Console.WriteLine("Switch Case: Velia");
+                    System.Console.WriteLine("veliaeristate:" + VeliaerisSurvivorController.VeliaerisStates);
 
+                        skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.eldritchHealing, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.CorruptAndHeal, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.split, GenericSkill.SkillOverridePriority.Network);
+                        skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Network);
 
-                            skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.eldritchHealing, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.primary.UnsetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.CorruptAndHeal, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.utility.UnsetSkillOverride(skillLocator.utility, VeliaerisSurvivor.split, GenericSkill.SkillOverridePriority.Network);
-                            skillLocator.special.UnsetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Network);
-                        
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Veliaeris)
                         {
                             skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.CorruptAndHeal, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.utility.SetSkillOverride(skillLocator.utility, VeliaerisSurvivor.split, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.special.SetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Network);
                         }
-                        if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+                        if (VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris)
                         {
                             skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Network);
                             skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Network);
@@ -384,54 +409,53 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
                     default:
                         break;
                 }
-            //}
+                //}
+            
             System.Console.WriteLine("ranswitch");
             int hereticLimit = 0;
-            if (HeldState.gatheredPrimary > 0 || HeldState.gatheredSecondary> 0 || HeldState.gatheredUtility> 0 || HeldState.gatheredSpecial> 0)
+            if (VeliaerisSurvivorController.gatheredPrimary > 0 || VeliaerisSurvivorController.gatheredSecondary> 0 || VeliaerisSurvivorController.gatheredUtility> 0 || VeliaerisSurvivorController.gatheredSpecial> 0)
             {
                 System.Console.WriteLine("Entered heretic");
-                if ((HeldState.hereticOverridesPrimary.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates==VeliaerisState.Veliaeris) || (HeldState.hereticOverridesPrimary.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates ==VeliaerisState.Eris) || (HeldState.hereticOverridesPrimary.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
+                if ((VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisState.Veliaeris) && VeliaerisSurvivorController.VeliaerisStates==VeliaerisState.Veliaeris) || (VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisState.Eris) && VeliaerisSurvivorController.VeliaerisStates ==VeliaerisState.Eris) || (VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisState.Velia) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia))
                 {
                     hereticLimit++;
                     skillLocator.primary.UnsetSkillOverride(skillLocator.primary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarPrimaryReplacement")), GenericSkill.SkillOverridePriority.Network);
                     skillLocator.primary.SetSkillOverride(skillLocator.primary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarPrimaryReplacement")),GenericSkill.SkillOverridePriority.Network);
                 }
-                if ((HeldState.hereticOverridesSecondary.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates ==VeliaerisState.Veliaeris) || (HeldState.hereticOverridesSecondary.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris) || (HeldState.hereticOverridesSecondary.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
+                if ((VeliaerisSurvivorController.hereticOverridesSecondary.Contains(VeliaerisState.Veliaeris) && VeliaerisSurvivorController.VeliaerisStates ==VeliaerisState.Veliaeris) || (VeliaerisSurvivorController.hereticOverridesSecondary.Contains(VeliaerisState.Eris) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris) || (VeliaerisSurvivorController.hereticOverridesSecondary.Contains(VeliaerisState.Velia) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia))
                 {
                     hereticLimit++;
                     skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSecondaryReplacement")), GenericSkill.SkillOverridePriority.Network);
                     skillLocator.secondary.SetSkillOverride(skillLocator.secondary,SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSecondaryReplacement")),GenericSkill.SkillOverridePriority.Network);
                 }
-                if ((HeldState.hereticOverridesUtility.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris) || (HeldState.hereticOverridesUtility.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris) || (HeldState.hereticOverridesUtility.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
+                if ((VeliaerisSurvivorController.hereticOverridesUtility.Contains(VeliaerisState.Veliaeris) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Veliaeris) || (VeliaerisSurvivorController.hereticOverridesUtility.Contains(VeliaerisState.Eris) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris) || (VeliaerisSurvivorController.hereticOverridesUtility.Contains(VeliaerisState.Velia) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia))
                 {
                     hereticLimit++;
                     skillLocator.utility.UnsetSkillOverride(skillLocator.utility, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarUtilityReplacement")), GenericSkill.SkillOverridePriority.Network);
                     skillLocator.utility.SetSkillOverride(skillLocator.utility,SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarUtilityReplacement")),GenericSkill.SkillOverridePriority.Network);
                 }
-                if ((HeldState.hereticOverridesSpecial.Contains(VeliaerisState.Veliaeris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris) || (HeldState.hereticOverridesSpecial.Contains(VeliaerisState.Eris) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris) || (HeldState.hereticOverridesSpecial.Contains(VeliaerisState.Velia) && VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia))
+                if ((VeliaerisSurvivorController.hereticOverridesSpecial.Contains(VeliaerisState.Veliaeris) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Veliaeris) || (VeliaerisSurvivorController.hereticOverridesSpecial.Contains(VeliaerisState.Eris) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Eris) || (VeliaerisSurvivorController.hereticOverridesSpecial.Contains(VeliaerisState.Velia) && VeliaerisSurvivorController.VeliaerisStates == VeliaerisState.Velia))
                 {
-                    System.Console.WriteLine("Entered heretic Special");
+//                    System.Console.WriteLine("Entered heretic Special");
                     hereticLimit++;
                     skillLocator.special.UnsetSkillOverride(skillLocator.special, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSpecialReplacement")), GenericSkill.SkillOverridePriority.Network);
                     skillLocator.special.SetSkillOverride(skillLocator.special, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSpecialReplacement")), GenericSkill.SkillOverridePriority.Network);
                 }
             }
-            System.Console.WriteLine("remove");
-            if (HeldState.hereticOverridesPrimary.Contains(VeliaerisPlugin.VeliaerisStates) == false)
+            if (VeliaerisSurvivorController.hereticOverridesPrimary.Contains(VeliaerisSurvivorController.VeliaerisStates) == false)
             {
                 skillLocator.primary.UnsetSkillOverride(skillLocator.primary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarPrimaryReplacement")), GenericSkill.SkillOverridePriority.Network);
             }
-            if (HeldState.hereticOverridesSecondary.Contains(VeliaerisPlugin.VeliaerisStates) == false)
+            if (VeliaerisSurvivorController.hereticOverridesSecondary.Contains(VeliaerisSurvivorController.VeliaerisStates) == false)
             {
                 skillLocator.secondary.UnsetSkillOverride(skillLocator.secondary, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSecondaryReplacement")), GenericSkill.SkillOverridePriority.Network);
             }
-            if (HeldState.hereticOverridesUtility.Contains(VeliaerisPlugin.VeliaerisStates) == false)
+            if (VeliaerisSurvivorController.hereticOverridesUtility.Contains(VeliaerisSurvivorController.VeliaerisStates) == false)
             {
                 skillLocator.utility.UnsetSkillOverride(skillLocator.utility, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarUtilityReplacement")), GenericSkill.SkillOverridePriority.Network);
             }
-            if (HeldState.hereticOverridesSpecial.Contains(VeliaerisPlugin.VeliaerisStates) == false)
+            if (VeliaerisSurvivorController.hereticOverridesSpecial.Contains(VeliaerisSurvivorController.VeliaerisStates) == false)
             {
-                System.Console.WriteLine("remove special");
                 skillLocator.special.UnsetSkillOverride(skillLocator.special, SkillCatalog.GetSkillDef(SkillCatalog.FindSkillIndexByName("LunarSpecialReplacement")), GenericSkill.SkillOverridePriority.Network);
             }                 
             
@@ -464,9 +488,9 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
     }
 
 
-//            VeliaerisPlugin.VeliaerisStates = HeldState.velState;
-System.Console.WriteLine("Velastate merge:" + VeliaerisPlugin.VeliaerisStates);
-if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
+//            HeldState.VeliaerisStates = HeldState.velState;
+System.Console.WriteLine("Velastate merge:" + HeldState.VeliaerisStates);
+if (HeldState.VeliaerisStates == VeliaerisState.Veliaeris)
 {
     System.Console.WriteLine("Entered Veliaeris");
     skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.basicScythe, GenericSkill.SkillOverridePriority.Contextual);
@@ -478,7 +502,7 @@ if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
     skillLocator.special.SetSkillOverride(skillLocator.special, VeliaerisSurvivor.voidDetonation, GenericSkill.SkillOverridePriority.Contextual);
 }
 
-    if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Eris)
+    if (HeldState.VeliaerisStates == VeliaerisState.Eris)
     {
                         System.Console.WriteLine("Entered Eris");
         skillLocator.special.SetSkillOverride(skillLocator.special, VeliaerisSurvivor.eldritchHealing, GenericSkill.SkillOverridePriority.Contextual);
@@ -489,7 +513,7 @@ if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Veliaeris)
         skillLocator.secondary.SetSkillOverride(skillLocator.secondary, VeliaerisSurvivor.allyBuff, GenericSkill.SkillOverridePriority.Contextual);
         skillLocator.primary.SetSkillOverride(skillLocator.primary, VeliaerisSurvivor.voidSkillDef, GenericSkill.SkillOverridePriority.Contextual);
     }
-    if (VeliaerisPlugin.VeliaerisStates == VeliaerisState.Velia)
+    if (HeldState.VeliaerisStates == VeliaerisState.Velia)
     {
     System.Console.WriteLine("Entered Velia");
     if (!onHereticPickup)

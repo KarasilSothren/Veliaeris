@@ -18,6 +18,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         // Token: 0x06000FE6 RID: 4070 RVA: 0x0004684C File Offset: 0x00044A4C
         public override void OnEnter()
         {
+            System.Console.WriteLine("Entered Detonate");
             base.OnEnter();
             this.duration = VoidDetonator.baseDuration / this.attackSpeedStat;
             //            EffectManager.SimpleImpactEffect(VoidDetonator.enterEffectPrefab, base.characterBody.corePosition, Vector3.up, false);
@@ -173,7 +174,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             // Token: 0x06000FEC RID: 4076 RVA: 0x00046AF8 File Offset: 0x00044CF8
             private bool DoDetonation(HurtBox targetHurtBox)
             {
-
+                System.Console.WriteLine("Detonate");
                 if (!targetHurtBox)
                 {
                     return false;

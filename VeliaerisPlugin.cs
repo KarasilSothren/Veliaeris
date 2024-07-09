@@ -26,14 +26,12 @@ namespace VeliaerisMod
         public const string MODUID = "com.karasil.VeliaerisMod";
         public const string MODNAME = "VeliaerisMod";
         public const string MODVERSION = "1.0.0";
-        private const string ver = "1.1";
+        private const string ver = "1.4";
 
         // a prefix for name tokens to prevent conflicts- please capitalize all name tokens for convention
         public const string DEVELOPER_PREFIX = "KARASIL";
 
         public static VeliaerisPlugin instance;
-        public static VeliaerisState previousSplitSate = VeliaerisState.Eris;
-        public static VeliaerisState VeliaerisStates;
         public VeliaerisPassive passiveSkillSlot;
         public static bool hasVoid = true;
         public static bool CustomStagesInstalled => IsModInstalled("com.Nuxlar.CoolerStages");
@@ -55,7 +53,7 @@ namespace VeliaerisMod
             System.Console.WriteLine("Check for void: " + hasVoid);
             Debug.Log("Current variant Version" + ver);
             instance = this;
-//            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };
+            On.RoR2.Networking.NetworkManagerSystemSteam.OnClientConnect += (s, u, t) => { };
             //easy to use logger
             Log.Init(Logger);
 

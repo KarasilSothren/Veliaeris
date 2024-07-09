@@ -30,6 +30,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         public static GameObject orbEffectPrefab;
         public override void OnEnter()
         {
+            System.Console.WriteLine("Entered Grasp");
             base.OnEnter();
             Transform modelTransfrom = base.GetModelTransform();
             this.hunterTracker = base.GetComponent<HuntressTracker>();
@@ -60,6 +61,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         {
             base.OnExit();
             this.FireOrbArrow();
+            System.Console.WriteLine("Exit Grasp");
         }
 
         protected virtual RoR2.Orbs.GenericDamageOrb CreateVoidOrb()

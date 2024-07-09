@@ -32,6 +32,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
 
         public override void OnEnter()
         {
+            System.Console.WriteLine("Entered Corrupt");
             base.OnEnter();
             Transform modelTransfrom = base.GetModelTransform();
             this.hunterTracker = base.GetComponent<HuntressTracker>();
@@ -59,6 +60,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
         {
             base.OnExit();
             this.FireOrbArrow();
+            System.Console.WriteLine("Left Corrupt");
         }
 
         protected virtual RoR2.Orbs.GenericDamageOrb CreateVoidOrb()
@@ -119,7 +121,7 @@ namespace VeliaerisMod.Survivors.Veliaeris.SkillStates
             //}
             //this.firedArrowCount++;
             RoR2.Orbs.GenericDamageOrb genericDamageOrb = this.CreateVoidOrb();
-
+            System.Console.WriteLine("Fired corrupt");
             genericDamageOrb.AddModdedDamageType(DamageTypes.AbyssCorrosion);
             genericDamageOrb.damageValue = 0f;
             genericDamageOrb.isCrit = this.isCrit;
